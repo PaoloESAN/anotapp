@@ -17,6 +17,7 @@
         z: number;
         w?: number;
         h?: number;
+        editing?: boolean;
     }
 
     let items = $state<ClipboardItem[]>([]);
@@ -376,12 +377,30 @@
                     onpointerdown={(e) => e.stopPropagation()}
                 >
                     {#if item.type === "text"}
-                        <div
-                            class="text-zinc-200 text-sm font-medium leading-relaxed w-full h-full overflow-y-auto pr-2 custom-scrollbar wrap-break-word cursor-text select-text"
-                            style="scrollbar-width: thin; scrollbar-color: #3f3f46 transparent;"
-                        >
-                            {item.content}
-                        </div>
+                        {#if item.editing}
+                            <!-- svelte-ignore a11y_autofocus -->
+                            <textarea
+                                bind:value={item.content}
+                                autofocus
+                                onblur={() => (item.editing = false)}
+                                onkeydown={(e) => {
+                                    if (e.key === "Escape") item.editing = false;
+                                    if (e.key === "Enter" && e.ctrlKey) item.editing = false;
+                                }}
+                                class="w-full h-full bg-zinc-950/50 rounded px-1 py-0.5 text-zinc-200 text-sm font-medium leading-relaxed resize-none outline-none ring-1 ring-indigo-500/50 custom-scrollbar wrap-break-word"
+                                style="scrollbar-width: thin; scrollbar-color: #3f3f46 transparent;"
+                            ></textarea>
+                        {:else}
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div
+                                ondblclick={() => (item.editing = true)}
+                                class="text-zinc-200 text-sm font-medium leading-relaxed w-full h-full overflow-y-auto pr-2 custom-scrollbar wrap-break-word cursor-text select-text hover:bg-zinc-800/20 rounded transition-colors"
+                                style="scrollbar-width: thin; scrollbar-color: #3f3f46 transparent;"
+                                title="Doble clic para editar"
+                            >
+                                {item.content}
+                            </div>
+                        {/if}
                     {:else}
                         <div
                             class="flex flex-1 items-center justify-center bg-zinc-950/30 rounded-lg overflow-hidden border border-zinc-800/50 w-full h-full p-2"
