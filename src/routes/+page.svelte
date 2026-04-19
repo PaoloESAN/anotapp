@@ -334,13 +334,13 @@
             id="card-{item.id}"
             in:fly={{ y: 20, duration: 400, opacity: 0 }}
             out:fade={{ duration: 200 }}
-            class="absolute cursor-grab active:cursor-grabbing group select-none flex flex-col"
+            class="absolute group select-none flex flex-col"
             style="left: {item.x}px; top: {item.y}px; z-index: {item.z}; {item.w
                 ? `width: ${item.w}px;`
                 : item.type === 'text' ? 'min-width: 280px; max-width: 400px;' : 'min-width: 150px;'} {item.h
                 ? `height: ${item.h}px;`
                 : ''}"
-            onpointerdown={(e) => onPointerDown(e, item)}
+            onpointerdown={() => { item.z = maxZ++; }}
         >
             <!-- Card Container (Glassmorphism design) -->
             <div
@@ -348,7 +348,8 @@
             >
                 <!-- Header (Drag Handle) -->
                 <div
-                    class="shrink-0 flex items-center justify-between px-3 py-2 border-b border-zinc-800/50 bg-zinc-900/80 rounded-t-2xl"
+                    class="shrink-0 flex items-center justify-between px-3 py-2 border-b border-zinc-800/50 bg-zinc-900/80 rounded-t-2xl cursor-grab active:cursor-grabbing"
+                    onpointerdown={(e) => onPointerDown(e, item)}
                 >
                     <div class="flex items-center space-x-2 text-zinc-400 min-w-0">
                         {#if item.type === "text"}
@@ -397,10 +398,8 @@
                 </div>
 
                 <!-- Content Area -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
                     class="flex-1 flex overflow-hidden min-h-0 {item.type === 'image' ? 'p-1.5' : 'p-4'}"
-                    onpointerdown={(e) => e.stopPropagation()}
                 >
                     {#if item.type === "text"}
                         {#if item.editing}
