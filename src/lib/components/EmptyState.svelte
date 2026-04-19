@@ -1,0 +1,35 @@
+<script lang="ts">
+    import { fade } from "svelte/transition";
+    import Copy from "@lucide/svelte/icons/copy";
+
+    let { isReady, hasItems }: { isReady: boolean; hasItems: boolean } =
+        $props();
+</script>
+
+{#if isReady && !hasItems}
+    <div
+        in:fade={{ duration: 600, delay: 200 }}
+        out:fade={{ duration: 200 }}
+        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+    >
+        <div
+            class="w-24 h-24 mb-6 rounded-full bg-zinc-800/50 flex items-center justify-center border border-zinc-700/50 shadow-2xl relative shadow-indigo-500/10"
+        >
+            <Copy class="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+            <div class="absolute top-0 right-0 w-3 h-3">
+                <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"
+                ></span>
+                <span
+                    class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"
+                ></span>
+            </div>
+        </div>
+        <h1 class="text-3xl tracking-tight font-light text-zinc-300">
+            Empieza a copiar
+        </h1>
+        <p class="text-zinc-500 mt-2 font-medium">
+            los elementos aparecerán aquí como ventanas flotantes
+        </p>
+    </div>
+{/if}
