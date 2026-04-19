@@ -112,7 +112,7 @@
                             if (e.key === "Enter" && e.ctrlKey)
                                 item.editing = false;
                         }}
-                        class="w-full h-full bg-zinc-950/50 rounded px-1 py-0.5 text-zinc-200 text-sm font-medium leading-relaxed resize-none outline-none ring-1 ring-indigo-500/50 custom-scrollbar wrap-break-word placeholder:text-zinc-500/40"
+                        class="w-full h-full bg-zinc-950/50 rounded px-1 py-0.5 text-zinc-200 text-sm font-medium leading-relaxed resize-none outline-none ring-1 ring-primary/50 custom-scrollbar wrap-break-word placeholder:text-zinc-500/40"
                         style="scrollbar-width: thin; scrollbar-color: #3f3f46 transparent;"
                     ></textarea>
                 {:else}

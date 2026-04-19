@@ -316,14 +316,14 @@
 />
 
 <main
-    class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 relative font-sans isolate selection:bg-indigo-500/30"
+    class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 relative font-sans isolate selection:bg-primary/30"
 >
     <div
         class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none -z-10"
         aria-hidden="true"
     ></div>
     <div
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 opacity-50 blur-[120px] rounded-full pointer-events-none -z-10"
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 opacity-50 blur-[120px] rounded-full pointer-events-none -z-10"
     ></div>
 
     <EmptyState {isReady} hasItems={items.length > 0} />
@@ -346,7 +346,7 @@
             class="flex items-center space-x-3 text-zinc-200 font-semibold tracking-tight text-lg drop-shadow-md"
         >
             <div
-                class="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30"
+                class="w-6 h-6 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30"
             >
                 <MousePointer2 class="w-3.5 h-3.5 text-white" />
             </div>
