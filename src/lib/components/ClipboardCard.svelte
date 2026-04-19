@@ -32,13 +32,15 @@
     style="left: {item.x}px; top: {item.y}px; z-index: {item.z}; {item.w
         ? `width: ${item.w}px;`
         : item.type === 'text'
-          ? 'min-width: 280px; max-width: 400px;'
-          : 'min-width: 150px;'} {item.h ? `height: ${item.h}px;` : ''}"
+          ? 'min-width: 200px; max-width: clamp(250px, 40vw, 400px);'
+          : 'min-width: 150px;'} {item.h 
+        ? `height: ${item.h}px;` 
+        : item.type === 'text' ? 'max-height: clamp(120px, 35vh, 200px);' : ''}"
     onpointerdown={() => onBringToFront(item.id)}
 >
     <!-- Card Container -->
     <div
-        class="rounded-2xl border border-zinc-700/50 bg-zinc-900/60 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:border-zinc-600/80 group-hover:shadow-indigo-500/5 ring-1 ring-white/5 flex flex-col w-full h-full relative"
+        class="rounded-2xl border border-zinc-700/50 bg-zinc-900/60 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:border-zinc-600/80 group-hover:shadow-indigo-500/5 ring-1 ring-white/5 flex flex-col w-full flex-1 min-h-0 relative"
     >
         <!-- Header Handle -->
         <div
