@@ -6,10 +6,13 @@
     import { setMode, resetMode } from "mode-watcher";
     import { onMount } from "svelte";
     import { Button, buttonVariants } from "./ui/button";
-    import { Input } from "./ui/input";
-    import { Label } from "./ui/label";
+    import { Switch } from "$lib/components/ui/switch/index.js";
+    import { Label } from "$lib/components/ui/label/index.js";
 
-    let { addEmptyText }: { addEmptyText: () => void } = $props();
+    let {
+        addEmptyText,
+        hideHeaders = $bindable(false),
+    }: { addEmptyText: () => void; hideHeaders: boolean } = $props();
     let isSettingsOpen = $state(false);
     let currentColor = $state("oklch(0.546 0.245 262.881)");
     let themeMode = $state("system");
@@ -23,9 +26,9 @@
 
     let colors = [
         {
-            name: "Morado Real",
+            name: "Azul Oscuro",
             value: "oklch(0.546 0.245 262.881)",
-            class: "bg-indigo-500",
+            class: "bg-blue-600",
         },
         { name: "Rojo Vivo", value: "oklch(0.6 0.25 25)", class: "bg-red-500" },
         {
@@ -40,9 +43,9 @@
         },
         { name: "Dorado", value: "oklch(0.7 0.15 80)", class: "bg-yellow-500" },
         {
-            name: "Azul Océano",
+            name: "Celeste",
             value: "oklch(0.6 0.15 240)",
-            class: "bg-blue-500",
+            class: "bg-sky-400",
         },
     ];
 
@@ -95,6 +98,19 @@
         </Dialog.Header>
 
         <div class="grid gap-8 py-6">
+            <!-- Interface Control -->
+            <div
+                class="flex items-center justify-between gap-3 bg-muted/40 p-4 rounded-xl border border-border/50 shadow-sm"
+            >
+                <div class="space-y-1">
+                    <Label
+                        class="text-sm font-semibold tracking-wide text-foreground"
+                        >Ocultar Etiquetas</Label
+                    >
+                </div>
+                <Switch bind:checked={hideHeaders} />
+            </div>
+
             <!-- Theme Control -->
             <div class="flex flex-col gap-3">
                 <h4

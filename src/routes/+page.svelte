@@ -10,6 +10,7 @@
 
     let _initialItems: ClipboardItem[] = [];
     let _initialZ = 1;
+    let _initialHideHeaders = false;
     if (typeof localStorage !== "undefined") {
         try {
             const saved = localStorage.getItem("anotapp-items");
@@ -18,6 +19,8 @@
                 _initialZ =
                     Math.max(0, ..._initialItems.map((i) => i.z || 0)) + 1;
             }
+            const savedHeaders = localStorage.getItem("anotapp-hide-headers");
+            if (savedHeaders === "true") _initialHideHeaders = true;
         } catch (e) {}
     }
 
@@ -29,14 +32,18 @@
     let isReady = $state(false);
     let isAlertOpen = $state(false);
 
+    let hideHeaders = $state(_initialHideHeaders);
+
     $effect(() => {
         // Deeply track items via JSON serialization
         const serialized = JSON.stringify(items);
+        const hideState = hideHeaders;
 
         // Debounce storage writes to prevent IO blocking during drag/resize (60fps)
         const timer = setTimeout(() => {
             try {
                 localStorage.setItem("anotapp-items", serialized);
+                localStorage.setItem("anotapp-hide-headers", String(hideState));
             } catch (err) {
                 console.warn("Storage exception, possibly exceeded quota", err);
             }
@@ -336,6 +343,7 @@
             {onResizeStart}
             {onDelete}
             {onCopy}
+            {hideHeaders}
         />
     {/each}
 
@@ -354,7 +362,7 @@
         </div>
     </div>
 
-    <ActionButtons {addEmptyText} />
+    <ActionButtons {addEmptyText} bind:hideHeaders />
 
     <ClearAllAlert count={items.length} onClear={() => (items = [])} />
 </main>
