@@ -5,12 +5,13 @@
     import type { ClipboardItem } from "$lib/types";
     import ClipboardCard from "$lib/components/ClipboardCard.svelte";
     import EmptyState from "$lib/components/EmptyState.svelte";
+    import ClearAllAlert from "$lib/components/ClearAllAlert.svelte";
 
     let items = $state<ClipboardItem[]>([]);
     let maxZ = $state(1);
     let pollInterval: ReturnType<typeof setInterval>;
     let lastText = $state("");
-    let lastImageLen = $state(0);
+    let lastImageSize = $state("");
     let isReady = $state(false);
 
     async function poll() {
@@ -23,7 +24,12 @@
                 textFailed = true;
             }
 
-            if (!textFailed && text && text !== lastText && !items.find((i) => i.type === "text" && i.content === text)) {
+            if (
+                !textFailed &&
+                text &&
+                text !== lastText &&
+                !items.find((i) => i.type === "text" && i.content === text)
+            ) {
                 lastText = text;
                 addItem({ type: "text", content: text });
             }
@@ -31,25 +37,75 @@
             if (!text || textFailed) {
                 try {
                     const img = await readImage();
-                    const rgba = await img.rgba();
-                    if (rgba.length > 0 && rgba.length !== lastImageLen) {
-                        lastImageLen = rgba.length;
-                        const size = await img.size();
-                        const canvas = document.createElement("canvas");
-                        canvas.width = size.width;
-                        canvas.height = size.height;
-                        const ctx = canvas.getContext("2d");
-                        if (ctx) {
-                            ctx.putImageData(new ImageData(new Uint8ClampedArray(rgba), size.width, size.height), 0, 0);
-                            const dataUrl = canvas.toDataURL("image/png");
-                            
-                            let targetW = size.width + 16;
-                            let targetH = size.height + 56;
-                            if (targetW > 350) { targetH = (350 / targetW) * targetH; targetW = 350; }
-                            if (targetH > 400) { targetW = (400 / targetH) * targetW; targetH = 400; }
+                    const size = await img.size();
+                    const sizeStr = `${size.width}x${size.height}`;
 
-                            if (!items.find((i) => i.type === "image" && i.content === dataUrl)) {
-                                addItem({ type: "image", content: dataUrl, w: targetW, h: targetH });
+                    if (sizeStr !== "0x0" && sizeStr !== lastImageSize) {
+                        lastImageSize = sizeStr;
+                        const rgba = await img.rgba();
+
+                        const tempCanvas = document.createElement("canvas");
+                        tempCanvas.width = size.width;
+                        tempCanvas.height = size.height;
+                        const tCtx = tempCanvas.getContext("2d");
+
+                        if (tCtx) {
+                            tCtx.putImageData(
+                                new ImageData(
+                                    new Uint8ClampedArray(rgba),
+                                    size.width,
+                                    size.height,
+                                ),
+                                0,
+                                0,
+                            );
+
+                            // Scale down if it's monstrously huge to prevent UI thread lock
+                            const scale = Math.min(
+                                1,
+                                1500 / Math.max(size.width, size.height),
+                            );
+                            const cw = Math.floor(size.width * scale);
+                            const ch = Math.floor(size.height * scale);
+
+                            const canvas = document.createElement("canvas");
+                            canvas.width = cw;
+                            canvas.height = ch;
+                            const ctx = canvas.getContext("2d");
+
+                            if (ctx) {
+                                ctx.drawImage(tempCanvas, 0, 0, cw, ch);
+                                // Use WebP or JPEG for 10x faster encoding than PNG
+                                const dataUrl = canvas.toDataURL(
+                                    "image/webp",
+                                    0.9,
+                                );
+
+                                let targetW = size.width + 16;
+                                let targetH = size.height + 56;
+                                if (targetW > 350) {
+                                    targetH = (350 / targetW) * targetH;
+                                    targetW = 350;
+                                }
+                                if (targetH > 400) {
+                                    targetW = (400 / targetH) * targetW;
+                                    targetH = 400;
+                                }
+
+                                if (
+                                    !items.find(
+                                        (i) =>
+                                            i.type === "image" &&
+                                            i.content === dataUrl,
+                                    )
+                                ) {
+                                    addItem({
+                                        type: "image",
+                                        content: dataUrl,
+                                        w: targetW,
+                                        h: targetH,
+                                    });
+                                }
                             }
                         }
                     }
@@ -58,7 +114,17 @@
         } catch (fatal) {}
     }
 
-    function addItem({ type, content, w, h }: { type: "text" | "image"; content: string; w?: number; h?: number; }) {
+    function addItem({
+        type,
+        content,
+        w,
+        h,
+    }: {
+        type: "text" | "image";
+        content: string;
+        w?: number;
+        h?: number;
+    }) {
         items.push({
             id: crypto.randomUUID(),
             type,
@@ -67,7 +133,7 @@
             y: window.innerHeight / 2 - 150 + (Math.random() * 100 - 50),
             z: maxZ++,
             w,
-            h
+            h,
         });
     }
 
@@ -78,14 +144,25 @@
 
     onDestroy(() => clearInterval(pollInterval));
 
-    let activeDrag: { id: string; offsetX: number; offsetY: number } | null = $state(null);
-    let activeResize: { id: string; startW: number; startH: number; startX: number; startY: number } | null = $state(null);
+    let activeDrag: { id: string; offsetX: number; offsetY: number } | null =
+        $state(null);
+    let activeResize: {
+        id: string;
+        startW: number;
+        startH: number;
+        startX: number;
+        startY: number;
+    } | null = $state(null);
 
     function onDragStart(e: PointerEvent, id: string) {
         const item = items.find((i) => i.id === id);
         if (!item) return;
         item.z = maxZ++;
-        activeDrag = { id, offsetX: e.clientX - item.x, offsetY: e.clientY - item.y };
+        activeDrag = {
+            id,
+            offsetX: e.clientX - item.x,
+            offsetY: e.clientY - item.y,
+        };
         const el = e.currentTarget as HTMLElement;
         el.setPointerCapture(e.pointerId);
     }
@@ -119,8 +196,14 @@
         } else if (activeResize) {
             const item = items.find((i) => i.id === activeResize!.id);
             if (item) {
-                item.w = Math.max(item.type === "image" ? 100 : 200, activeResize!.startW + (e.clientX - activeResize!.startX));
-                item.h = Math.max(item.type === "image" ? 100 : 100, activeResize!.startH + (e.clientY - activeResize!.startY));
+                item.w = Math.max(
+                    item.type === "image" ? 100 : 200,
+                    activeResize!.startW + (e.clientX - activeResize!.startX),
+                );
+                item.h = Math.max(
+                    item.type === "image" ? 100 : 100,
+                    activeResize!.startH + (e.clientY - activeResize!.startY),
+                );
             }
         }
     }
@@ -129,7 +212,8 @@
         if (!activeDrag && !activeResize) return;
         try {
             const el = e.target as HTMLElement;
-            if (el && el.releasePointerCapture) el.releasePointerCapture(e.pointerId);
+            if (el && el.releasePointerCapture)
+                el.releasePointerCapture(e.pointerId);
         } catch (err) {}
         activeDrag = null;
         activeResize = null;
@@ -141,8 +225,10 @@
             const el = document.getElementById(`card-${item.id}`);
             const w = item.w || el?.getBoundingClientRect().width || 280;
             const h = item.h || el?.getBoundingClientRect().height || 150;
-            if (item.x + w > window.innerWidth - padding) item.x = Math.max(padding, window.innerWidth - w - padding);
-            if (item.y + h > window.innerHeight - padding) item.y = Math.max(padding, window.innerHeight - h - padding);
+            if (item.x + w > window.innerWidth - padding)
+                item.x = Math.max(padding, window.innerWidth - w - padding);
+            if (item.y + h > window.innerHeight - padding)
+                item.y = Math.max(padding, window.innerHeight - h - padding);
             if (item.x < padding) item.x = padding;
             if (item.y < padding) item.y = padding;
         });
@@ -153,26 +239,47 @@
     }
 
     function onBringToFront(id: string) {
-        const item = items.find(i => i.id === id);
+        const item = items.find((i) => i.id === id);
         if (item) item.z = maxZ++;
     }
 
     async function onCopy(item: ClipboardItem) {
-        if (item.type === "text") {
-            try {
-                const { writeText } = await import("@tauri-apps/plugin-clipboard-manager");
+        try {
+            if (item.type === "text") {
+                const { writeText } = await import(
+                    "@tauri-apps/plugin-clipboard-manager"
+                );
                 await writeText(item.content);
                 lastText = item.content;
-            } catch (err) {}
-        }
+            } else if (item.type === "image") {
+                const { writeImage } = await import(
+                    "@tauri-apps/plugin-clipboard-manager"
+                );
+                const res = await fetch(item.content);
+                const blob = await res.blob();
+                const buffer = await blob.arrayBuffer();
+                await writeImage(new Uint8Array(buffer));
+            }
+        } catch (err) {}
     }
 </script>
 
-<svelte:window onpointermove={onPointerMove} onpointerup={onPointerUp} onresize={onWindowResize} />
+<svelte:window
+    onpointermove={onPointerMove}
+    onpointerup={onPointerUp}
+    onresize={onWindowResize}
+/>
 
-<main class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 relative font-sans isolate selection:bg-indigo-500/30">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none -z-10" aria-hidden="true"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 opacity-50 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<main
+    class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 relative font-sans isolate selection:bg-indigo-500/30"
+>
+    <div
+        class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none -z-10"
+        aria-hidden="true"
+    ></div>
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 opacity-50 blur-[120px] rounded-full pointer-events-none -z-10"
+    ></div>
 
     <EmptyState {isReady} hasItems={items.length > 0} />
 
@@ -187,19 +294,38 @@
         />
     {/each}
 
-    <div class="fixed top-0 left-0 w-full px-6 py-4 pointer-events-none z-50 flex items-center justify-between">
-        <div class="flex items-center space-x-3 text-zinc-200 font-semibold tracking-tight text-lg drop-shadow-md">
-            <div class="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+    <div
+        class="fixed top-0 left-0 w-full px-6 py-4 pointer-events-none z-50 flex items-center justify-between"
+    >
+        <div
+            class="flex items-center space-x-3 text-zinc-200 font-semibold tracking-tight text-lg drop-shadow-md"
+        >
+            <div
+                class="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30"
+            >
                 <MousePointer2 class="w-3.5 h-3.5 text-white" />
             </div>
             <span>Anotapp</span>
         </div>
     </div>
+
+    <ClearAllAlert count={items.length} onClear={() => (items = [])} />
 </main>
 
 <style>
-    :global(body) { margin: 0; padding: 0; background: #09090b; }
-    :global(.custom-scrollbar::-webkit-scrollbar) { width: 4px; }
-    :global(.custom-scrollbar::-webkit-scrollbar-track) { background: transparent; }
-    :global(.custom-scrollbar::-webkit-scrollbar-thumb) { background-color: #3f3f46; border-radius: 4px; }
+    :global(body) {
+        margin: 0;
+        padding: 0;
+        background: #09090b;
+    }
+    :global(.custom-scrollbar::-webkit-scrollbar) {
+        width: 4px;
+    }
+    :global(.custom-scrollbar::-webkit-scrollbar-track) {
+        background: transparent;
+    }
+    :global(.custom-scrollbar::-webkit-scrollbar-thumb) {
+        background-color: #3f3f46;
+        border-radius: 4px;
+    }
 </style>
