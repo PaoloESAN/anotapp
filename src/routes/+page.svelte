@@ -74,6 +74,18 @@
                             ctx.putImageData(imgData, 0, 0);
                             const dataUrl = canvas.toDataURL("image/png");
 
+                            // Calculate proper initial wrap size
+                            let targetW = size.width + 16; // Add minor layout padding
+                            let targetH = size.height + 56; // Add header height + padding
+                            if (targetW > 350) {
+                                targetH = (350 / targetW) * targetH;
+                                targetW = 350;
+                            }
+                            if (targetH > 400) {
+                                targetW = (400 / targetH) * targetW;
+                                targetH = 400;
+                            }
+
                             if (
                                 !items.find(
                                     (i) =>
@@ -81,7 +93,7 @@
                                         i.content === dataUrl,
                                 )
                             ) {
-                                addItem({ type: "image", content: dataUrl });
+                                addItem({ type: "image", content: dataUrl, w: targetW, h: targetH });
                             }
                         }
                     }
@@ -100,9 +112,13 @@
     function addItem({
         type,
         content,
+        w,
+        h
     }: {
         type: "text" | "image";
         content: string;
+        w?: number;
+        h?: number;
     }) {
         const newX = window.innerWidth / 2 - 150 + (Math.random() * 100 - 50);
         const newY = window.innerHeight / 2 - 150 + (Math.random() * 100 - 50);
@@ -114,6 +130,8 @@
             x: newX,
             y: newY,
             z: maxZ++,
+            w,
+            h
         });
     }
 
@@ -184,9 +202,11 @@
                     activeResize!.startW + (e.clientX - activeResize!.startX);
                 const newH =
                     activeResize!.startH + (e.clientY - activeResize!.startY);
-                // Minimum limits
-                item.w = Math.max(200, newW);
-                item.h = Math.max(100, newH);
+                // Minimum limits separated by type
+                const minW = item.type === "image" ? 100 : 200;
+                const minH = item.type === "image" ? 100 : 100;
+                item.w = Math.max(minW, newW);
+                item.h = Math.max(minH, newH);
             }
         }
     }
@@ -317,7 +337,7 @@
             class="absolute cursor-grab active:cursor-grabbing group select-none flex flex-col"
             style="left: {item.x}px; top: {item.y}px; z-index: {item.z}; {item.w
                 ? `width: ${item.w}px;`
-                : 'min-width: 280px; max-width: 400px;'} {item.h
+                : item.type === 'text' ? 'min-width: 280px; max-width: 400px;' : 'min-width: 150px;'} {item.h
                 ? `height: ${item.h}px;`
                 : ''}"
             onpointerdown={(e) => onPointerDown(e, item)}
@@ -330,24 +350,30 @@
                 <div
                     class="shrink-0 flex items-center justify-between px-3 py-2 border-b border-zinc-800/50 bg-zinc-900/80 rounded-t-2xl"
                 >
-                    <div class="flex items-center space-x-2 text-zinc-400">
+                    <div class="flex items-center space-x-2 text-zinc-400 min-w-0">
                         {#if item.type === "text"}
-                            <Type class="w-4 h-4 text-indigo-400" />
-                            <span
-                                class="text-xs font-medium uppercase tracking-wider text-zinc-500"
-                                >Texto</span
-                            >
+                            <Type class="w-4 h-4 text-indigo-400 shrink-0" />
+                            {#if !item.w || item.w >= 140}
+                                <span
+                                    class="text-xs font-semibold tracking-wider text-zinc-500 truncate"
+                                >
+                                    TEXTO
+                                </span>
+                            {/if}
                         {:else}
-                            <ImageIcon class="w-4 h-4 text-emerald-400" />
-                            <span
-                                class="text-xs font-medium uppercase tracking-wider text-zinc-500"
-                                >Imagen</span
-                            >
+                            <ImageIcon class="w-4 h-4 text-emerald-400 shrink-0" />
+                            {#if !item.w || item.w >= 140}
+                                <span
+                                    class="text-xs font-semibold tracking-wider text-zinc-500 truncate"
+                                >
+                                    IMAGEN
+                                </span>
+                            {/if}
                         {/if}
                     </div>
 
                     <div
-                        class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                     >
                         {#if item.type === "text"}
                             <button
@@ -373,7 +399,7 @@
                 <!-- Content Area -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
-                    class="p-4 flex-1 flex overflow-hidden min-h-0"
+                    class="flex-1 flex overflow-hidden min-h-0 {item.type === 'image' ? 'p-1.5' : 'p-4'}"
                     onpointerdown={(e) => e.stopPropagation()}
                 >
                     {#if item.type === "text"}
@@ -403,12 +429,15 @@
                         {/if}
                     {:else}
                         <div
-                            class="flex flex-1 items-center justify-center bg-zinc-950/30 rounded-lg overflow-hidden border border-zinc-800/50 w-full h-full p-2"
+                            class="flex flex-1 items-center justify-center bg-zinc-950/60 rounded overflow-hidden border border-zinc-800/80 w-full h-full relative"
                         >
+                            <!-- Ambient blur behind image for a premium look -->
+                            <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-md scale-110 pointer-events-none" style="background-image: url({item.content})"></div>
+                            
                             <img
                                 src={item.content}
                                 alt="Clipboard capture"
-                                class="w-full h-full object-contain rounded-sm pointer-events-none"
+                                class="w-full h-full object-contain pointer-events-none drop-shadow-lg z-10"
                             />
                         </div>
                     {/if}
