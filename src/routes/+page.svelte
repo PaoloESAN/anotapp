@@ -7,12 +7,41 @@
     import EmptyState from "$lib/components/EmptyState.svelte";
     import ClearAllAlert from "$lib/components/ClearAllAlert.svelte";
 
-    let items = $state<ClipboardItem[]>([]);
-    let maxZ = $state(1);
+    let _initialItems: ClipboardItem[] = [];
+    let _initialZ = 1;
+    if (typeof localStorage !== "undefined") {
+        try {
+            const saved = localStorage.getItem("anotapp-items");
+            if (saved) {
+                _initialItems = JSON.parse(saved);
+                _initialZ = Math.max(0, ..._initialItems.map((i) => i.z || 0)) + 1;
+            }
+        } catch (e) {}
+    }
+
+    let items = $state<ClipboardItem[]>(_initialItems);
+    let maxZ = $state(_initialZ);
     let pollInterval: ReturnType<typeof setInterval>;
     let lastText = $state("");
     let lastImageSize = $state("");
     let isReady = $state(false);
+    let isAlertOpen = $state(false);
+
+    $effect(() => {
+        // Deeply track items via JSON serialization
+        const serialized = JSON.stringify(items);
+        
+        // Debounce storage writes to prevent IO blocking during drag/resize (60fps)
+        const timer = setTimeout(() => {
+            try {
+                localStorage.setItem("anotapp-items", serialized);
+            } catch (err) {
+                console.warn("Storage exception, possibly exceeded quota", err);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    });
 
     async function poll() {
         try {
