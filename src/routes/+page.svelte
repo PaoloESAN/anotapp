@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from "svelte";
     import { readText, readImage } from "@tauri-apps/plugin-clipboard-manager";
     import MousePointer2 from "@lucide/svelte/icons/mouse-pointer-2";
+    import Plus from "@lucide/svelte/icons/plus";
     import type { ClipboardItem } from "$lib/types";
     import ClipboardCard from "$lib/components/ClipboardCard.svelte";
     import EmptyState from "$lib/components/EmptyState.svelte";
@@ -163,6 +164,20 @@
             z: maxZ++,
             w,
             h,
+        });
+    }
+
+    function addEmptyText() {
+        items.push({
+            id: crypto.randomUUID(),
+            type: "text",
+            content: "",
+            x: window.innerWidth / 2 - 140 + (Math.random() * 40 - 20),
+            y: window.innerHeight / 2 - 75 + (Math.random() * 40 - 20),
+            z: maxZ++,
+            w: 280,
+            h: 150,
+            editing: false
         });
     }
 
@@ -337,6 +352,15 @@
             <span>Anotapp</span>
         </div>
     </div>
+
+    <!-- Add Note Button -->
+    <button
+        onclick={addEmptyText}
+        class="fixed bottom-6 left-6 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-indigo-500/30 bg-zinc-900/80 backdrop-blur text-indigo-400 shadow-xl transition-all hover:bg-indigo-950/50 hover:border-indigo-500/50 hover:text-indigo-300 hover:scale-105 active:scale-95"
+        title="Crear nueva nota manual"
+    >
+        <Plus class="w-6 h-6" />
+    </button>
 
     <ClearAllAlert count={items.length} onClear={() => (items = [])} />
 </main>
