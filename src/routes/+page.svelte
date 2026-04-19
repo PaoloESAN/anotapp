@@ -2,11 +2,11 @@
     import { onMount, onDestroy } from "svelte";
     import { readText, readImage } from "@tauri-apps/plugin-clipboard-manager";
     import MousePointer2 from "@lucide/svelte/icons/mouse-pointer-2";
-    import Plus from "@lucide/svelte/icons/plus";
     import type { ClipboardItem } from "$lib/types";
     import ClipboardCard from "$lib/components/ClipboardCard.svelte";
     import EmptyState from "$lib/components/EmptyState.svelte";
     import ClearAllAlert from "$lib/components/ClearAllAlert.svelte";
+    import ActionButtons from "$lib/components/ActionButtons.svelte";
 
     let _initialItems: ClipboardItem[] = [];
     let _initialZ = 1;
@@ -15,7 +15,8 @@
             const saved = localStorage.getItem("anotapp-items");
             if (saved) {
                 _initialItems = JSON.parse(saved);
-                _initialZ = Math.max(0, ..._initialItems.map((i) => i.z || 0)) + 1;
+                _initialZ =
+                    Math.max(0, ..._initialItems.map((i) => i.z || 0)) + 1;
             }
         } catch (e) {}
     }
@@ -31,7 +32,7 @@
     $effect(() => {
         // Deeply track items via JSON serialization
         const serialized = JSON.stringify(items);
-        
+
         // Debounce storage writes to prevent IO blocking during drag/resize (60fps)
         const timer = setTimeout(() => {
             try {
@@ -177,7 +178,7 @@
             z: maxZ++,
             w: 280,
             h: 150,
-            editing: false
+            editing: false,
         });
     }
 
@@ -353,14 +354,7 @@
         </div>
     </div>
 
-    <!-- Add Note Button -->
-    <button
-        onclick={addEmptyText}
-        class="fixed bottom-6 left-6 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-indigo-500/30 bg-zinc-900/80 backdrop-blur text-indigo-400 shadow-xl transition-all hover:bg-indigo-950/50 hover:border-indigo-500/50 hover:text-indigo-300 hover:scale-105 active:scale-95"
-        title="Crear nueva nota manual"
-    >
-        <Plus class="w-6 h-6" />
-    </button>
+    <ActionButtons {addEmptyText} />
 
     <ClearAllAlert count={items.length} onClear={() => (items = [])} />
 </main>
