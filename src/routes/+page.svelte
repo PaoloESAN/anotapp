@@ -11,6 +11,7 @@
     let _initialItems: ClipboardItem[] = [];
     let _initialZ = 1;
     let _initialHideHeaders = false;
+    let _initialBgPattern = "grid";
     if (typeof localStorage !== "undefined") {
         try {
             const saved = localStorage.getItem("anotapp-items");
@@ -21,6 +22,9 @@
             }
             const savedHeaders = localStorage.getItem("anotapp-hide-headers");
             if (savedHeaders === "true") _initialHideHeaders = true;
+            
+            const savedBg = localStorage.getItem("anotapp-bg-pattern");
+            if (savedBg) _initialBgPattern = savedBg;
         } catch (e) {}
     }
 
@@ -33,17 +37,20 @@
     let isAlertOpen = $state(false);
 
     let hideHeaders = $state(_initialHideHeaders);
+    let bgPattern = $state(_initialBgPattern);
 
     $effect(() => {
         // Deeply track items via JSON serialization
         const serialized = JSON.stringify(items);
         const hideState = hideHeaders;
+        const bgState = bgPattern;
 
         // Debounce storage writes to prevent IO blocking during drag/resize (60fps)
         const timer = setTimeout(() => {
             try {
                 localStorage.setItem("anotapp-items", serialized);
                 localStorage.setItem("anotapp-hide-headers", String(hideState));
+                localStorage.setItem("anotapp-bg-pattern", bgState);
             } catch (err) {
                 console.warn("Storage exception, possibly exceeded quota", err);
             }
@@ -339,7 +346,7 @@
     class="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 relative font-sans isolate selection:bg-primary/30 transition-colors duration-500"
 >
     <div
-        class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none -z-10"
+        class="absolute inset-0 pointer-events-none -z-10 pattern-{bgPattern} transition-all duration-700"
         aria-hidden="true"
     ></div>
     <div
@@ -375,12 +382,30 @@
         </div>
     </div>
 
-    <ActionButtons {addEmptyText} bind:hideHeaders />
+    <ActionButtons {addEmptyText} bind:hideHeaders bind:bgPattern />
 
     <ClearAllAlert count={items.length} onClear={() => (items = [])} />
 </main>
 
 <style>
+    :global(.pattern-grid) {
+        background-image: linear-gradient(to right, #80808012 1px, transparent 1px),
+            linear-gradient(to bottom, #80808012 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+    :global(.pattern-dots) {
+        background-image: radial-gradient(#80808040 1.5px, transparent 1.5px);
+        background-size: 24px 24px;
+    }
+    :global(.pattern-cross) {
+        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l24 24M24 0L0 24' stroke='%23808080' stroke-width='1' fill='none' stroke-opacity='0.15'/%3E%3C/svg%3E");
+    }
+    :global(.pattern-waves) {
+        background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20c5 0 10-5 20-5s15 5 20 5' stroke='%23808080' stroke-width='1.5' fill='none' stroke-opacity='0.15'/%3E%3Cpath d='M0 40c5 0 10-5 20-5s15 5 20 5' stroke='%23808080' stroke-width='1.5' fill='none' stroke-opacity='0.15'/%3E%3C/svg%3E");
+    }
+    :global(.pattern-none) {
+        background-image: none;
+    }
     :global(body) {
         margin: 0;
         padding: 0;

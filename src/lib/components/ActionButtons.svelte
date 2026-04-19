@@ -6,8 +6,13 @@
     let {
         addEmptyText,
         hideHeaders = $bindable(false),
-    }: { addEmptyText: () => void; hideHeaders: boolean } = $props();
-    
+        bgPattern = $bindable("grid"),
+    }: {
+        addEmptyText: () => void;
+        hideHeaders: boolean;
+        bgPattern: string;
+    } = $props();
+
     let isSettingsOpen = $state(false);
 </script>
 
@@ -29,4 +34,4 @@
     </button>
 </div>
 
-<SettingsModal bind:open={isSettingsOpen} bind:hideHeaders />
+<SettingsModal bind:open={isSettingsOpen} bind:hideHeaders bind:bgPattern />

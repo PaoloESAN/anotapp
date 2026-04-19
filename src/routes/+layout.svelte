@@ -11,8 +11,10 @@
 		if (savedColor) {
 			document.documentElement.style.setProperty("--primary", savedColor);
 		} else {
-			// Set default to Morado Indigo
-			document.documentElement.style.setProperty("--primary", "oklch(0.546 0.245 262.881)");
+			document.documentElement.style.setProperty(
+				"--primary",
+				"oklch(0.546 0.245 262.881)",
+			);
 		}
 	});
 </script>

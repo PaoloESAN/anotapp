@@ -9,9 +9,11 @@
     let {
         open = $bindable(false),
         hideHeaders = $bindable(false),
+        bgPattern = $bindable("grid"),
     }: {
         open: boolean;
         hideHeaders: boolean;
+        bgPattern: string;
     } = $props();
 
     let currentColor = $state("oklch(0.546 0.245 262.881)");
@@ -49,6 +51,14 @@
         },
     ];
 
+    let patterns = [
+        { id: "none", name: "Liso" },
+        { id: "grid", name: "Cuadrícula" },
+        { id: "dots", name: "Puntitos" },
+        { id: "cross", name: "Cruces" },
+        { id: "waves", name: "Ondas" },
+    ];
+
     function setPrimaryColor(oklch: string) {
         document.documentElement.style.setProperty("--primary", oklch);
         localStorage.setItem("anotapp-primary-color", oklch);
@@ -67,9 +77,9 @@
 
 <Dialog.Root bind:open>
     <Dialog.Content
-        class="sm:max-w-md bg-background border-border text-foreground p-6 rounded-xl shadow-2xl"
+        class="sm:max-w-md bg-background border-border text-foreground p-6 rounded-xl shadow-2xl flex flex-col max-h-[85vh]"
     >
-        <Dialog.Header>
+        <Dialog.Header class="shrink-0">
             <Dialog.Title
                 class="text-xl font-bold tracking-tight text-foreground mb-1"
                 >Configuración general</Dialog.Title
@@ -79,7 +89,7 @@
             </Dialog.Description>
         </Dialog.Header>
 
-        <div class="grid gap-8 py-6">
+        <div class="grid gap-8 py-6 overflow-y-auto custom-scrollbar pr-2 min-h-0">
             <!-- Interface Control -->
             <div
                 class="flex items-center justify-between gap-3 bg-muted/40 p-4 rounded-xl border border-border/50 shadow-sm"
@@ -155,6 +165,42 @@
                                     class="w-5 h-5 text-white drop-shadow-md"
                                 />
                             {/if}
+                        </button>
+                    {/each}
+                </div>
+            </div>
+
+            <!-- Background Pattern Control -->
+            <div class="flex flex-col gap-3">
+                <h4
+                    class="text-sm font-semibold tracking-wide text-foreground uppercase"
+                >
+                    Fondo de Lienzo
+                </h4>
+                <div
+                    class="flex items-center gap-3 bg-muted/60 p-3 rounded-xl border border-border/50 flex-wrap"
+                >
+                    {#each patterns as p}
+                        <button
+                            onclick={() => (bgPattern = p.id)}
+                            class="relative flex flex-col items-center justify-center w-18 h-12 rounded-lg border-2 overflow-hidden transition-all hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary {bgPattern ===
+                            p.id
+                                ? 'border-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-background shadow-md shadow-primary/20'
+                                : 'border-border/60 hover:border-border'}"
+                            title={p.name}
+                            aria-label={p.name}
+                        >
+                            <div
+                                class="absolute inset-0 bg-background pattern-{p.id}"
+                            ></div>
+                            <div
+                                class="relative z-10 flex items-center justify-center w-full h-full bg-background/50 backdrop-blur-[1px]"
+                            >
+                                <span
+                                    class="text-[0.65rem] font-semibold text-foreground/80 drop-shadow-sm"
+                                    >{p.name}</span
+                                >
+                            </div>
                         </button>
                     {/each}
                 </div>
