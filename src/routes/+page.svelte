@@ -204,6 +204,8 @@
         startH: number;
         startX: number;
         startY: number;
+        startItemX: number;
+        dir: "se" | "sw";
     } | null = $state(null);
 
     function onDragStart(e: PointerEvent, id: string) {
@@ -219,7 +221,7 @@
         el.setPointerCapture(e.pointerId);
     }
 
-    function onResizeStart(e: PointerEvent, id: string) {
+    function onResizeStart(e: PointerEvent, id: string, dir: "se" | "sw" = "se") {
         e.stopPropagation();
         e.preventDefault();
         const item = items.find((i) => i.id === id);
@@ -233,6 +235,8 @@
             startH: rect ? rect.height : item.h || 150,
             startX: e.clientX,
             startY: e.clientY,
+            startItemX: item.x,
+            dir
         };
         const handle = e.currentTarget as HTMLElement;
         handle.setPointerCapture(e.pointerId);
@@ -248,13 +252,22 @@
         } else if (activeResize) {
             const item = items.find((i) => i.id === activeResize!.id);
             if (item) {
-                item.w = Math.max(
-                    item.type === "image" ? 100 : 200,
-                    activeResize!.startW + (e.clientX - activeResize!.startX),
-                );
+                const deltaX = e.clientX - activeResize!.startX;
+                const deltaY = e.clientY - activeResize!.startY;
+                const minW = item.type === "image" ? 100 : 200;
+
+                if (activeResize!.dir === "se") {
+                    item.w = Math.max(minW, activeResize!.startW + deltaX);
+                } else if (activeResize!.dir === "sw") {
+                    const maxPossibleDelta = activeResize!.startW - minW;
+                    const safeDeltaX = Math.min(deltaX, maxPossibleDelta);
+                    item.w = activeResize!.startW - safeDeltaX;
+                    item.x = activeResize!.startItemX + safeDeltaX;
+                }
+
                 item.h = Math.max(
                     item.type === "image" ? 100 : 100,
-                    activeResize!.startH + (e.clientY - activeResize!.startY),
+                    activeResize!.startH + deltaY,
                 );
             }
         }

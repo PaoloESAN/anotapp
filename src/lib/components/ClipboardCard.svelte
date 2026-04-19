@@ -18,7 +18,7 @@
         item: ClipboardItem;
         onBringToFront: (id: string) => void;
         onDragStart: (e: PointerEvent, id: string) => void;
-        onResizeStart: (e: PointerEvent, id: string) => void;
+        onResizeStart: (e: PointerEvent, id: string, dir?: "se" | "sw") => void;
         onCopy: (item: ClipboardItem) => void;
         onDelete: (id: string) => void;
         hideHeaders?: boolean;
@@ -189,11 +189,11 @@
             {/if}
         </div>
 
-        <!-- Resizer Handle -->
+        <!-- Lower Right Resizer Handle -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
-            onpointerdown={(e) => onResizeStart(e, item.id)}
+            onpointerdown={(e) => onResizeStart(e, item.id, "se")}
         >
             <svg
                 width="10"
@@ -202,6 +202,41 @@
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 class="text-zinc-500"
+            >
+                <path
+                    d="M9 9L9 4"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                />
+                <path
+                    d="M4 9L9 9"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                />
+                <path
+                    d="M5 5L9 9"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                />
+            </svg>
+        </div>
+
+        <!-- Lower Left Resizer Handle -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+            class="absolute bottom-0 left-0 w-6 h-6 cursor-sw-resize flex items-end justify-start p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
+            onpointerdown={(e) => onResizeStart(e, item.id, "sw")}
+        >
+            <svg
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                class="text-zinc-500 scale-x-[-1]"
             >
                 <path
                     d="M9 9L9 4"
