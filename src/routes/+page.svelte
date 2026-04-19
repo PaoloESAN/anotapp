@@ -316,7 +316,7 @@
 />
 
 <main
-    class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 relative font-sans isolate selection:bg-primary/30"
+    class="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 relative font-sans isolate selection:bg-primary/30 transition-colors duration-500"
 >
     <div
         class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none -z-10"
@@ -343,7 +343,7 @@
         class="fixed top-0 left-0 w-full px-6 py-4 pointer-events-none z-50 flex items-center justify-between"
     >
         <div
-            class="flex items-center space-x-3 text-zinc-200 font-semibold tracking-tight text-lg drop-shadow-md"
+            class="flex items-center space-x-3 text-slate-700 dark:text-zinc-200 font-semibold tracking-tight text-lg drop-shadow-md"
         >
             <div
                 class="w-6 h-6 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30"

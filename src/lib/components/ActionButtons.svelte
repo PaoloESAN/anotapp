@@ -5,6 +5,9 @@
     import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { setMode, resetMode } from "mode-watcher";
     import { onMount } from "svelte";
+    import { Button, buttonVariants } from "./ui/button";
+    import { Input } from "./ui/input";
+    import { Label } from "./ui/label";
 
     let { addEmptyText }: { addEmptyText: () => void } = $props();
     let isSettingsOpen = $state(false);
@@ -49,9 +52,9 @@
         currentColor = oklch;
     }
 
-    function handleSetMode(m: 'light'|'dark'|'system') {
+    function handleSetMode(m: "light" | "dark" | "system") {
         themeMode = m;
-        if (m === 'system') {
+        if (m === "system") {
             resetMode();
         } else {
             setMode(m);
@@ -63,14 +66,14 @@
 <div class="fixed bottom-6 left-6 z-50 flex flex-col items-center gap-3">
     <button
         onclick={addEmptyText}
-        class="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-zinc-900/80 backdrop-blur-md text-primary shadow-xl transition-all hover:bg-primary/10 hover:border-primary/50 hover:text-primary/80 hover:scale-105 active:scale-95"
+        class="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-background/80 backdrop-blur-md text-primary shadow-xl transition-all hover:bg-primary/10 hover:border-primary/50 hover:text-primary/80 hover:scale-105 active:scale-95"
         title="Crear nueva nota manual"
     >
         <Plus class="w-6 h-6" />
     </button>
     <button
         onclick={() => (isSettingsOpen = true)}
-        class="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-md text-zinc-400 shadow-md transition-all hover:bg-zinc-800 hover:border-zinc-600 hover:text-zinc-200 hover:scale-105 active:scale-95"
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-md text-muted-foreground shadow-md transition-all hover:bg-muted hover:border-border hover:text-foreground hover:scale-105 active:scale-95"
         title="Configuración"
     >
         <Settings class="w-5 h-5" />
@@ -79,14 +82,14 @@
 
 <Dialog.Root bind:open={isSettingsOpen}>
     <Dialog.Content
-        class="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 rounded-xl shadow-2xl"
+        class="sm:max-w-md bg-background border-border text-foreground p-6 rounded-xl shadow-2xl"
     >
         <Dialog.Header>
             <Dialog.Title
-                class="text-xl font-bold tracking-tight text-white mb-1"
+                class="text-xl font-bold tracking-tight text-foreground mb-1"
                 >Configuración general</Dialog.Title
             >
-            <Dialog.Description class="text-zinc-400">
+            <Dialog.Description class="text-muted-foreground">
                 Ajusta el motor visual para adaptar Anotapp a ti.
             </Dialog.Description>
         </Dialog.Header>
@@ -95,47 +98,64 @@
             <!-- Theme Control -->
             <div class="flex flex-col gap-3">
                 <h4
-                    class="text-sm font-semibold tracking-wide text-zinc-200 uppercase"
+                    class="text-sm font-semibold tracking-wide text-foreground uppercase"
                 >
                     Tema del sistema
                 </h4>
                 <div
-                    class="flex items-center gap-2 bg-zinc-900/50 p-1 rounded-lg border border-zinc-800/50"
+                    class="flex items-center gap-2 bg-muted/60 p-1 rounded-lg border border-border/50"
                 >
                     <button
                         onclick={() => handleSetMode("light")}
-                        class="flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {themeMode === 'light' ? 'bg-zinc-700/80 text-white shadow-md' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}"
-                        >Claro</button>
+                        class="flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {themeMode ===
+                        'light'
+                            ? 'bg-background text-foreground shadow-md border border-border/50'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+                        >Claro</button
+                    >
                     <button
                         onclick={() => handleSetMode("dark")}
-                        class="flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {themeMode === 'dark' ? 'bg-zinc-700/80 text-white shadow-md' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}"
-                        >Oscuro</button>
+                        class="flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {themeMode ===
+                        'dark'
+                            ? 'bg-background text-foreground shadow-md border border-border/50'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+                        >Oscuro</button
+                    >
                     <button
                         onclick={() => handleSetMode("system")}
-                        class="flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {themeMode === 'system' ? 'bg-zinc-700/80 text-white shadow-md' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}"
-                        >Auto</button>
+                        class="flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {themeMode ===
+                        'system'
+                            ? 'bg-background text-foreground shadow-md border border-border/50'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+                        >Auto</button
+                    >
                 </div>
             </div>
 
             <!-- Color Palette Control -->
             <div class="flex flex-col gap-3">
                 <h4
-                    class="text-sm font-semibold tracking-wide text-zinc-200 uppercase"
+                    class="text-sm font-semibold tracking-wide text-foreground uppercase"
                 >
                     Tono primario
                 </h4>
                 <div
-                    class="flex items-center gap-3 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800/50 flex-wrap"
+                    class="flex items-center gap-3 bg-muted/60 p-3 rounded-xl border border-border/50 flex-wrap"
                 >
                     {#each colors as c}
                         <button
                             onclick={() => setPrimaryColor(c.value)}
-                            class="{c.class} flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all hover:scale-110 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 {currentColor === c.value ? 'border-white ring-2 ring-primary ring-offset-2 ring-offset-zinc-950 scale-110' : 'border-transparent'}"
+                            class="{c.class} flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all hover:scale-110 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary {currentColor ===
+                            c.value
+                                ? 'border-background ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 shadow-lg shadow-primary/40'
+                                : 'border-transparent'}"
                             title={c.name}
                             aria-label={c.name}
                         >
                             {#if currentColor === c.value}
-                                <Check class="w-5 h-5 text-zinc-50 drop-shadow-md" />
+                                <Check
+                                    class="w-5 h-5 text-white drop-shadow-md"
+                                />
                             {/if}
                         </button>
                     {/each}
