@@ -174,12 +174,8 @@
                 {/if}
             {:else}
                 <div
-                    class="flex flex-1 items-center justify-center bg-slate-100/60 dark:bg-zinc-950/60 rounded overflow-hidden border border-slate-200/80 dark:border-zinc-800/80 w-full h-full relative"
+                    class="flex flex-1 items-center justify-center bg-transparent rounded overflow-hidden w-full h-full relative"
                 >
-                    <div
-                        class="absolute inset-0 bg-cover bg-center opacity-30 blur-md scale-110 pointer-events-none"
-                        style="background-image: url({item.content})"
-                    ></div>
                     <img
                         src={item.content}
                         alt="Clipboard capture"

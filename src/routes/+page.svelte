@@ -39,6 +39,7 @@
 
     let hideHeaders = $state(_initialHideHeaders);
     let bgPattern = $state(_initialBgPattern);
+    let customBgImage = $state("");
 
     $effect(() => {
         // Deeply track items via JSON serialization
@@ -198,6 +199,15 @@
     }
 
     onMount(() => {
+        try {
+            const savedImg = localStorage.getItem("anotapp-custom-bg-image");
+            if (savedImg) customBgImage = savedImg;
+        } catch(e) {}
+        
+        window.addEventListener("anotapp-bg-updated", ((e: CustomEvent) => {
+            customBgImage = e.detail;
+        }) as EventListener);
+
         pollInterval = setInterval(poll, 1500);
         setTimeout(() => (isReady = true), 300);
     });
@@ -350,6 +360,13 @@
         class="absolute inset-0 pointer-events-none -z-10 pattern-{bgPattern} transition-all duration-700"
         aria-hidden="true"
     ></div>
+    
+    {#if bgPattern === 'custom-image' && customBgImage}
+        <div 
+            class="absolute inset-0 pointer-events-none -z-20 bg-cover bg-center transition-all duration-700" 
+            style="background-image: url('{customBgImage}')"
+        ></div>
+    {/if}
     <div
         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 opacity-50 blur-[120px] rounded-full pointer-events-none -z-10"
     ></div>

@@ -57,6 +57,7 @@
         { id: "dots", name: "Puntitos" },
         { id: "cross", name: "Cruces" },
         { id: "waves", name: "Ondas" },
+        { id: "custom-image", name: "Imagen" },
     ];
 
     function setPrimaryColor(oklch: string) {
@@ -72,6 +73,42 @@
         } else {
             setMode(m);
         }
+    }
+
+    function handleCustomImage(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (!input.files || input.files.length === 0) return;
+        
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                let w = img.width;
+                let h = img.height;
+                // Escalar a máximo 1920px para no reventar el LocalStorage
+                if (w > 1920) {
+                    h = (1920 / w) * h;
+                    w = 1920;
+                }
+                canvas.width = w;
+                canvas.height = h;
+                ctx?.drawImage(img, 0, 0, w, h);
+                const dataUrl = canvas.toDataURL("image/webp", 0.8);
+                
+                try {
+                    localStorage.setItem("anotapp-custom-bg-image", dataUrl);
+                    bgPattern = "custom-image";
+                    window.dispatchEvent(new CustomEvent("anotapp-bg-updated", { detail: dataUrl }));
+                } catch(e) {
+                    console.error("Imagen muy grande para guardar");
+                }
+            };
+            img.src = ev.target?.result as string;
+        };
+        reader.readAsDataURL(file);
     }
 </script>
 
@@ -184,7 +221,13 @@
                 >
                     {#each patterns as p}
                         <button
-                            onclick={() => (bgPattern = p.id)}
+                            onclick={() => {
+                                if (p.id === "custom-image") {
+                                    document.getElementById("hidden-bg-upload")?.click();
+                                } else {
+                                    bgPattern = p.id;
+                                }
+                            }}
                             class="relative flex flex-col items-center justify-center w-18 h-12 rounded-lg border-2 overflow-hidden transition-all hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary {bgPattern ===
                             p.id
                                 ? 'border-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-background shadow-md shadow-primary/20'
@@ -207,6 +250,15 @@
                     {/each}
                 </div>
             </div>
+
+            <!-- Input oculto para cargar la imagen -->
+            <input 
+                type="file" 
+                id="hidden-bg-upload" 
+                accept="image/*" 
+                class="hidden" 
+                onchange={handleCustomImage} 
+            />
         </div>
     </Dialog.Content>
 </Dialog.Root>
