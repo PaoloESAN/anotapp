@@ -89,7 +89,9 @@
             </Dialog.Description>
         </Dialog.Header>
 
-        <div class="grid gap-8 py-6 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+        <div
+            class="grid gap-8 py-6 overflow-y-auto custom-scrollbar pr-2 min-h-0"
+        >
             <!-- Interface Control -->
             <div
                 class="flex items-center justify-between gap-3 bg-muted/40 p-4 rounded-xl border border-border/50 shadow-sm"
@@ -97,7 +99,7 @@
                 <div class="space-y-1">
                     <Label
                         class="text-sm font-semibold tracking-wide text-foreground"
-                        >Ocultar Etiquetas</Label
+                        >Ocultar Títulos</Label
                     >
                 </div>
                 <Switch bind:checked={hideHeaders} />

@@ -1,7 +1,5 @@
 <script lang="ts">
     import { fade, fly } from "svelte/transition";
-    import Type from "@lucide/svelte/icons/type";
-    import ImageIcon from "@lucide/svelte/icons/image";
     import Trash2 from "@lucide/svelte/icons/trash-2";
     import Copy from "@lucide/svelte/icons/copy";
     import type { ClipboardItem } from "$lib/types";
@@ -44,10 +42,8 @@
 >
     <!-- Card Container -->
     <div
-        class="rounded-2xl border border-slate-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:border-slate-300 dark:group-hover:border-zinc-600/80 group-hover:shadow-indigo-500/5 ring-1 ring-black/5 dark:ring-white/5 flex flex-col w-full flex-1 min-h-0 relative {hideHeaders ? 'cursor-grab active:cursor-grabbing' : ''}"
-        onpointerdown={(e) => {
-            if (hideHeaders) onDragStart(e, item.id);
-        }}
+        class="rounded-2xl border border-slate-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:border-slate-300 dark:group-hover:border-zinc-600/80 group-hover:shadow-indigo-500/5 ring-1 ring-black/5 dark:ring-white/5 flex flex-col w-full flex-1 min-h-0 relative cursor-grab active:cursor-grabbing"
+        onpointerdown={(e) => onDragStart(e, item.id)}
     >
         <!-- Header Handle -->
         {#if !hideHeaders}
@@ -58,28 +54,32 @@
                 <div
                     class="flex items-center space-x-2 text-slate-500 dark:text-zinc-400 min-w-0"
                 >
-                    {#if item.type === "text"}
-                        <Type
-                            class="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0"
+                    {#if item.editingTitle}
+                        <!-- svelte-ignore a11y_autofocus -->
+                        <input
+                            type="text"
+                            bind:value={item.title}
+                            autofocus
+                            onpointerdown={(e) => e.stopPropagation()}
+                            onblur={() => (item.editingTitle = false)}
+                            onkeydown={(e) => {
+                                if (e.key === "Enter" || e.key === "Escape") item.editingTitle = false;
+                            }}
+                            class="text-xs font-semibold tracking-wider text-slate-700 dark:text-zinc-200 bg-slate-100 dark:bg-zinc-800 rounded px-1.5 py-0.5 outline-none ring-1 ring-indigo-500/50 w-full max-w-[150px]"
                         />
-                        {#if !item.w || item.w >= 140}
-                            <span
-                                class="text-xs font-semibold tracking-wider text-slate-400 dark:text-zinc-500 truncate"
-                            >
-                                TEXTO
-                            </span>
-                        {/if}
                     {:else}
-                        <ImageIcon
-                            class="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0"
-                        />
-                        {#if !item.w || item.w >= 140}
-                            <span
-                                class="text-xs font-semibold tracking-wider text-slate-400 dark:text-zinc-500 truncate"
-                            >
-                                IMAGEN
-                            </span>
-                        {/if}
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div
+                            onpointerdown={(e) => e.stopPropagation()}
+                            ondblclick={() => {
+                                if (!item.title) item.title = item.type === "text" ? "TEXTO" : "IMAGEN";
+                                item.editingTitle = true;
+                            }}
+                            class="text-xs font-semibold tracking-wider text-slate-400 dark:text-zinc-500 truncate cursor-text hover:text-slate-600 dark:hover:text-zinc-300 transition-colors px-1"
+                            title="Doble clic para renombrar"
+                        >
+                            {item.title || (item.type === "text" ? "TEXTO" : "IMAGEN")}
+                        </div>
                     {/if}
                 </div>
 

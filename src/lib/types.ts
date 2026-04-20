@@ -8,4 +8,6 @@ export interface ClipboardItem {
     w?: number;
     h?: number;
     editing?: boolean;
+    title?: string;
+    editingTitle?: boolean;
 }
