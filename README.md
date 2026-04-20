@@ -1,42 +1,62 @@
-# sv
+<p align="center">
+  <img src="src/lib/assets/favicon.svg" alt="Anotapp Logo" width="128" />
+</p>
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+<h1 align="center">Anotapp</h1>
 
-## Creating a project
+<p align="center">
+  Gestor de portapapeles visual y organizado para escritorio construido con Tauri y Svelte.
+</p>
 
-If you're seeing this, you've probably already done this step. Congrats!
+---
 
-```sh
-# create a new project
-npx sv create my-app
+## Descripción
+
+Anotapp es una herramienta que captura automáticamente el historial del portapapeles y los presenta como tarjetas interactivas en un lienzo infinito. Permite organizar extractos de texto e imagenes de forma visual, con capacidades de redimensionamiento, personalizacion y edición.
+
+## Capturas de pantalla
+
+<p align="center">
+  <img src="screenshots/screenshot1.png" alt="Vista principal" width="800" />
+</p>
+
+## Caracteristicas
+
+- Captura automatica: Monitorización en tiempo real de texto e imagenes copiadas al portapapeles.
+- Interfaz interactiva: Tarjetas que se pueden arrastrar, redimensionar y organizar libremente por capas.
+- Edicion de contenido: Capacidad de modificar textos y renombrar titulos de tarjetas mediante doble clic.
+- Personalizacion de interfaz: Seleccion de colores primarios y soporte para temas claro, oscuro y sincronización con el sistema.
+- Fondos de lienzo: Diferentes patrones visuales (cuadricula, puntos, ondas) o seleccion de una imagen personalizada con optimizacion automatica.
+- Ventana minimalista: Diseño sin bordes con controles personalizados estilo macOS.
+- Persistencia local: Todos tus elementos y configuraciones se guardan automaticamente en el almacenamiento local.
+
+## Tecnologias utilizadas
+
+- [Tauri v2](https://v2.tauri.app/)
+- [Svelte 5](https://svelte.dev/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Shadcn Svelte](https://www.shadcn-svelte.com/)
+- [Lucide Icons](https://lucide.dev/)
+
+## Instalacion y Desarrollo
+
+Para ejecutar este proyecto de forma local, **asegúrate de tener instalado Rust y Node.js.**
+
+1. Clonar el repositorio:
+```bash
+git clone https://github.com/tu-usuario/anotapp.git
 ```
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.15.1 create --template minimal --types ts --install npm ./
+2. Instalar las dependencias:
+```bash
+npm install
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+3. Ejecutar en modo desarrollo:
+```bash
+npx tauri dev
 ```
 
-## Building
+## Licencia
 
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Este proyecto esta bajo la Licencia MIT.
