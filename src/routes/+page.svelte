@@ -7,6 +7,7 @@
     import EmptyState from "$lib/components/EmptyState.svelte";
     import ClearAllAlert from "$lib/components/ClearAllAlert.svelte";
     import ActionButtons from "$lib/components/ActionButtons.svelte";
+    import Titlebar from "$lib/components/Titlebar.svelte";
 
     let _initialItems: ClipboardItem[] = [];
     let _initialZ = 1;
@@ -367,20 +368,7 @@
         />
     {/each}
 
-    <div
-        class="fixed top-0 left-0 w-full px-6 py-4 pointer-events-none z-50 flex items-center justify-between"
-    >
-        <div
-            class="flex items-center space-x-3 text-slate-700 dark:text-zinc-200 font-semibold tracking-tight text-lg drop-shadow-md"
-        >
-            <div
-                class="w-6 h-6 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30"
-            >
-                <MousePointer2 class="w-3.5 h-3.5 text-white" />
-            </div>
-            <span>Anotapp</span>
-        </div>
-    </div>
+    <Titlebar />
 
     <ActionButtons {addEmptyText} bind:hideHeaders bind:bgPattern />
 
