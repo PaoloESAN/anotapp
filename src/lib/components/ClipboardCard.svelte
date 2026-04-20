@@ -21,6 +21,8 @@
         onDelete: (id: string) => void;
         hideHeaders?: boolean;
     } = $props();
+
+    let cardHeight = $state(0);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -42,6 +44,7 @@
 >
     <!-- Card Container -->
     <div
+        bind:clientHeight={cardHeight}
         class="rounded-2xl border border-slate-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:border-slate-300 dark:group-hover:border-zinc-600/80 group-hover:shadow-indigo-500/5 ring-1 ring-black/5 dark:ring-white/5 flex flex-col w-full flex-1 min-h-0 relative cursor-grab active:cursor-grabbing"
         onpointerdown={(e) => onDragStart(e, item.id)}
     >
@@ -108,7 +111,7 @@
             </div>
         {:else}
             <!-- Floating Actions for hideHeaders mode -->
-            <div class="absolute top-2 right-2 flex flex-col gap-1.5 items-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-50">
+            <div class="absolute top-2 right-2 flex {cardHeight < 90 ? 'flex-row' : 'flex-col'} gap-1.5 items-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-50">
                 {#if item.type === "text"}
                     <button
                         onpointerdown={(e) => e.stopPropagation()}

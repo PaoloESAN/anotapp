@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
     import { readText, readImage } from "@tauri-apps/plugin-clipboard-manager";
-    import MousePointer2 from "@lucide/svelte/icons/mouse-pointer-2";
     import type { ClipboardItem } from "$lib/types";
     import ClipboardCard from "$lib/components/ClipboardCard.svelte";
     import EmptyState from "$lib/components/EmptyState.svelte";
@@ -23,7 +22,7 @@
             }
             const savedHeaders = localStorage.getItem("anotapp-hide-headers");
             if (savedHeaders === "true") _initialHideHeaders = true;
-            
+
             const savedBg = localStorage.getItem("anotapp-bg-pattern");
             if (savedBg) _initialBgPattern = savedBg;
         } catch (e) {}
@@ -202,8 +201,8 @@
         try {
             const savedImg = localStorage.getItem("anotapp-custom-bg-image");
             if (savedImg) customBgImage = savedImg;
-        } catch(e) {}
-        
+        } catch (e) {}
+
         window.addEventListener("anotapp-bg-updated", ((e: CustomEvent) => {
             customBgImage = e.detail;
         }) as EventListener);
@@ -239,7 +238,11 @@
         el.setPointerCapture(e.pointerId);
     }
 
-    function onResizeStart(e: PointerEvent, id: string, dir: "se" | "sw" = "se") {
+    function onResizeStart(
+        e: PointerEvent,
+        id: string,
+        dir: "se" | "sw" = "se",
+    ) {
         e.stopPropagation();
         e.preventDefault();
         const item = items.find((i) => i.id === id);
@@ -254,7 +257,7 @@
             startX: e.clientX,
             startY: e.clientY,
             startItemX: item.x,
-            dir
+            dir,
         };
         const handle = e.currentTarget as HTMLElement;
         handle.setPointerCapture(e.pointerId);
@@ -272,7 +275,7 @@
             if (item) {
                 const deltaX = e.clientX - activeResize!.startX;
                 const deltaY = e.clientY - activeResize!.startY;
-                const minW = item.type === "image" ? 100 : 200;
+                const minW = 80;
 
                 if (activeResize!.dir === "se") {
                     item.w = Math.max(minW, activeResize!.startW + deltaX);
@@ -283,10 +286,7 @@
                     item.x = activeResize!.startItemX + safeDeltaX;
                 }
 
-                item.h = Math.max(
-                    item.type === "image" ? 100 : 100,
-                    activeResize!.startH + deltaY,
-                );
+                item.h = Math.max(60, activeResize!.startH + deltaY);
             }
         }
     }
@@ -360,10 +360,10 @@
         class="absolute inset-0 pointer-events-none -z-10 pattern-{bgPattern} transition-all duration-700"
         aria-hidden="true"
     ></div>
-    
-    {#if bgPattern === 'custom-image' && customBgImage}
-        <div 
-            class="absolute inset-0 pointer-events-none -z-20 bg-cover bg-center transition-all duration-700" 
+
+    {#if bgPattern === "custom-image" && customBgImage}
+        <div
+            class="absolute inset-0 pointer-events-none -z-20 bg-cover bg-center transition-all duration-700"
             style="background-image: url('{customBgImage}')"
         ></div>
     {/if}
@@ -394,7 +394,11 @@
 
 <style>
     :global(.pattern-grid) {
-        background-image: linear-gradient(to right, #80808012 1px, transparent 1px),
+        background-image: linear-gradient(
+                to right,
+                #80808012 1px,
+                transparent 1px
+            ),
             linear-gradient(to bottom, #80808012 1px, transparent 1px);
         background-size: 24px 24px;
     }
