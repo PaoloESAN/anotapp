@@ -7,21 +7,41 @@
 
 {#if count > 0}
     <AlertDialog.Root>
-        <AlertDialog.Trigger class="fixed bottom-6 right-6 z-50 flex items-center space-x-2 rounded-full border border-red-900/30 dark:border-red-900/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 shadow-xl transition-all hover:bg-red-50 dark:hover:bg-red-950/50 hover:border-red-500/50 dark:hover:border-red-900/50 hover:text-red-700 dark:hover:text-red-300" title="Borrar todas las notas">
-            <Trash2 class="w-4 h-4" />
-            <span>Borrar todo</span>
+        <AlertDialog.Trigger
+            class="group fixed bottom-6 right-6 z-50 flex items-center rounded-full border border-red-900/30 dark:border-red-900/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur p-3 hover:px-5 text-sm font-semibold text-red-600 dark:text-red-400 shadow-xl transition-all duration-300 ease-out hover:bg-red-50 dark:hover:bg-red-950/50 hover:border-red-500/50 dark:hover:border-red-900/50 hover:text-red-700 dark:hover:text-red-300"
+            title="Borrar todas las notas"
+        >
+            <Trash2 class="w-5 h-5 shrink-0" />
+            <span class="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 ease-out group-hover:max-w-[150px] group-hover:opacity-100 group-hover:ml-2.5">
+                Borrar todo
+            </span>
         </AlertDialog.Trigger>
-        <AlertDialog.Content class="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100">
+        <AlertDialog.Content
+            class="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100"
+        >
             <AlertDialog.Header>
-                <AlertDialog.Title class="text-slate-800 dark:text-white">¿Estás absolutamente seguro?</AlertDialog.Title>
-                <AlertDialog.Description class="leading-relaxed text-slate-500 dark:text-zinc-400">
-                    Esta acción no se puede deshacer. Se borrarán permanentemente del lienzo las
-                    <span class="font-bold text-slate-700 dark:text-zinc-200">{count} anotaciones</span> actuales.
+                <AlertDialog.Title class="text-slate-800 dark:text-white"
+                    >¿Estás absolutamente seguro?</AlertDialog.Title
+                >
+                <AlertDialog.Description
+                    class="leading-relaxed text-slate-500 dark:text-zinc-400"
+                >
+                    Esta acción no se puede deshacer. Se borrarán
+                    permanentemente del lienzo las
+                    <span class="font-bold text-slate-700 dark:text-zinc-200"
+                        >{count} anotaciones</span
+                    > actuales.
                 </AlertDialog.Description>
             </AlertDialog.Header>
             <AlertDialog.Footer>
-                <AlertDialog.Cancel class="border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300">Cancelar</AlertDialog.Cancel>
-                <AlertDialog.Action class="bg-red-600 px-4 py-2 font-semibold text-zinc-50 hover:bg-red-500 transition-colors" onclick={onClear}>
+                <AlertDialog.Cancel
+                    class="border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
+                    >Cancelar</AlertDialog.Cancel
+                >
+                <AlertDialog.Action
+                    class="bg-red-600 px-4 py-2 font-semibold text-zinc-50 hover:bg-red-500 transition-colors"
+                    onclick={onClear}
+                >
                     Sí, borrar todo
                 </AlertDialog.Action>
             </AlertDialog.Footer>
