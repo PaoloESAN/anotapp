@@ -1,6 +1,10 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { readText, readImage } from "@tauri-apps/plugin-clipboard-manager";
+    import {
+        startListening,
+        onTextUpdate,
+        onImageUpdate,
+    } from "tauri-plugin-clipboard-api";
     import type { ClipboardItem } from "$lib/types";
     import ClipboardCard from "$lib/components/ClipboardCard.svelte";
     import EmptyState from "$lib/components/EmptyState.svelte";
@@ -30,9 +34,9 @@
 
     let items = $state<ClipboardItem[]>(_initialItems);
     let maxZ = $state(_initialZ);
-    let pollInterval: ReturnType<typeof setInterval>;
+    let stopListening: (() => Promise<void>) | null = null;
     let lastText = $state("");
-    let lastImageSize = $state("");
+    let lastImageB64Len = $state(0);
     let isReady = $state(false);
     let isAlertOpen = $state(false);
 
@@ -60,104 +64,29 @@
         return () => clearTimeout(timer);
     });
 
-    async function poll() {
+    async function handleImageUpdate(b64: string) {
         try {
-            let text = "";
-            let textFailed = false;
-            try {
-                text = await readText();
-            } catch (err) {
-                textFailed = true;
-            }
+            if (!b64 || b64.length === lastImageB64Len) return;
+            lastImageB64Len = b64.length;
 
-            if (
-                !textFailed &&
-                text &&
-                text !== lastText &&
-                !items.find((i) => i.type === "text" && i.content === text)
-            ) {
-                lastText = text;
-                addItem({ type: "text", content: text });
-            }
+            const dataUrl = `data:image/png;base64,${b64}`;
+            if (items.find((i) => i.type === "image" && i.content === dataUrl)) return;
 
-            if (!text || textFailed) {
-                try {
-                    const img = await readImage();
-                    const size = await img.size();
-                    const sizeStr = `${size.width}x${size.height}`;
+            const img = new Image();
+            await new Promise<void>((res) => {
+                img.onload = () => res();
+                img.src = dataUrl;
+            });
+            const iw = img.naturalWidth;
+            const ih = img.naturalHeight;
 
-                    if (sizeStr !== "0x0" && sizeStr !== lastImageSize) {
-                        lastImageSize = sizeStr;
-                        const rgba = await img.rgba();
+            let targetW = iw + 16;
+            let targetH = ih + 56;
+            if (targetW > 350) { targetH = (350 / targetW) * targetH; targetW = 350; }
+            if (targetH > 400) { targetW = (400 / targetH) * targetW; targetH = 400; }
 
-                        const tempCanvas = document.createElement("canvas");
-                        tempCanvas.width = size.width;
-                        tempCanvas.height = size.height;
-                        const tCtx = tempCanvas.getContext("2d");
-
-                        if (tCtx) {
-                            tCtx.putImageData(
-                                new ImageData(
-                                    new Uint8ClampedArray(rgba),
-                                    size.width,
-                                    size.height,
-                                ),
-                                0,
-                                0,
-                            );
-
-                            // Scale down if it's monstrously huge to prevent UI thread lock
-                            const scale = Math.min(
-                                1,
-                                1500 / Math.max(size.width, size.height),
-                            );
-                            const cw = Math.floor(size.width * scale);
-                            const ch = Math.floor(size.height * scale);
-
-                            const canvas = document.createElement("canvas");
-                            canvas.width = cw;
-                            canvas.height = ch;
-                            const ctx = canvas.getContext("2d");
-
-                            if (ctx) {
-                                ctx.drawImage(tempCanvas, 0, 0, cw, ch);
-                                // Use WebP or JPEG for 10x faster encoding than PNG
-                                const dataUrl = canvas.toDataURL(
-                                    "image/webp",
-                                    0.9,
-                                );
-
-                                let targetW = size.width + 16;
-                                let targetH = size.height + 56;
-                                if (targetW > 350) {
-                                    targetH = (350 / targetW) * targetH;
-                                    targetW = 350;
-                                }
-                                if (targetH > 400) {
-                                    targetW = (400 / targetH) * targetW;
-                                    targetH = 400;
-                                }
-
-                                if (
-                                    !items.find(
-                                        (i) =>
-                                            i.type === "image" &&
-                                            i.content === dataUrl,
-                                    )
-                                ) {
-                                    addItem({
-                                        type: "image",
-                                        content: dataUrl,
-                                        w: targetW,
-                                        h: targetH,
-                                    });
-                                }
-                            }
-                        }
-                    }
-                } catch (imgErr) {}
-            }
-        } catch (fatal) {}
+            addItem({ type: "image", content: dataUrl, w: targetW, h: targetH });
+        } catch (err) {}
     }
 
     function addItem({
@@ -197,7 +126,7 @@
         });
     }
 
-    onMount(() => {
+    onMount(async () => {
         try {
             const savedImg = localStorage.getItem("anotapp-custom-bg-image");
             if (savedImg) customBgImage = savedImg;
@@ -207,11 +136,22 @@
             customBgImage = e.detail;
         }) as EventListener);
 
-        pollInterval = setInterval(poll, 1500);
+        // Start the native OS clipboard monitor and subscribe to events
+        stopListening = await startListening();
+        await onTextUpdate((text) => {
+            if (!text || text === lastText) return;
+            if (items.find((i) => i.type === "text" && i.content === text)) return;
+            lastText = text;
+            addItem({ type: "text", content: text });
+        });
+        await onImageUpdate((b64) => handleImageUpdate(b64));
+
         setTimeout(() => (isReady = true), 300);
     });
 
-    onDestroy(() => clearInterval(pollInterval));
+    onDestroy(async () => {
+        if (stopListening) await stopListening();
+    });
 
     let activeDrag: { id: string; offsetX: number; offsetY: number } | null =
         $state(null);
@@ -330,35 +270,16 @@
         try {
             if (item.type === "text") {
                 const { writeText } = await import(
-                    "@tauri-apps/plugin-clipboard-manager"
+                    "tauri-plugin-clipboard-api"
                 );
                 await writeText(item.content);
                 lastText = item.content;
             } else if (item.type === "image") {
-                const { writeImage } = await import(
-                    "@tauri-apps/plugin-clipboard-manager"
+                const { writeImageBase64 } = await import(
+                    "tauri-plugin-clipboard-api"
                 );
-                const { Image: TauriImage } = await import(
-                    "@tauri-apps/api/image"
-                );
-                const img = new Image();
-                await new Promise<void>((resolve, reject) => {
-                    img.onload = () => resolve();
-                    img.onerror = reject;
-                    img.src = item.content;
-                });
-                const cvs = document.createElement("canvas");
-                cvs.width = img.naturalWidth;
-                cvs.height = img.naturalHeight;
-                const ctx = cvs.getContext("2d")!;
-                ctx.drawImage(img, 0, 0);
-                const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-                const tauriImg = await TauriImage.new(
-                    new Uint8Array(imageData.data.buffer),
-                    cvs.width,
-                    cvs.height,
-                );
-                await writeImage(tauriImg);
+                const b64 = item.content.replace(/^data:[^;]+;base64,/, "");
+                await writeImageBase64(b64);
             }
         } catch (err) {
             console.log(err);

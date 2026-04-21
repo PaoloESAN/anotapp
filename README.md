@@ -22,7 +22,7 @@ Anotapp es una herramienta que captura automáticamente el historial del portapa
 
 ## Caracteristicas
 
-- Captura automatica: Monitorización en tiempo real de texto e imagenes copiadas al portapapeles.
+- **Captura automática:** Monitorización nativa del portapapeles en tiempo real (texto e imágenes) mediante eventos del sistema operativo, sin polling.
 - Interfaz interactiva: Tarjetas que se pueden arrastrar, redimensionar y organizar libremente por capas.
 - Edicion de contenido: Capacidad de modificar textos y renombrar titulos de tarjetas mediante doble clic.
 - Personalizacion de interfaz: Seleccion de colores primarios y soporte para temas claro, oscuro y sincronización con el sistema.
@@ -37,6 +37,7 @@ Anotapp es una herramienta que captura automáticamente el historial del portapa
 - [TailwindCSS](https://tailwindcss.com/)
 - [Shadcn Svelte](https://www.shadcn-svelte.com/)
 - [Lucide Icons](https://lucide.dev/)
+- [tauri-plugin-clipboard](https://github.com/CrossCopy/tauri-plugin-clipboard)
 
 ## Instalacion y Desarrollo
 

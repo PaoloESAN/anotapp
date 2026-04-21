@@ -7,15 +7,26 @@
   ],
   "permissions": [
     "core:default",
-    "core:window:default",
     "core:window:allow-close",
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-maximize",
-    "clipboard-manager:default",
-    "clipboard-manager:allow-read-text",
-    "clipboard-manager:allow-read-image",
-    "clipboard-manager:allow-write-text",
-    "clipboard-manager:allow-write-image"
+    "clipboard:allow-read-text",
+    "clipboard:allow-read-image-base64",
+    "clipboard:allow-read-image-binary",
+    "clipboard:allow-read-html",
+    "clipboard:allow-read-rtf",
+    "clipboard:allow-read-files",
+    "clipboard:allow-write-text",
+    "clipboard:allow-write-image-base64",
+    "clipboard:allow-has-text",
+    "clipboard:allow-has-image",
+    "clipboard:allow-has-html",
+    "clipboard:allow-has-rtf",
+    "clipboard:allow-has-files",
+    "clipboard:allow-available-types",
+    "clipboard:allow-start-monitor",
+    "clipboard:allow-stop-monitor",
+    "clipboard:allow-is-monitor-running"
   ]
 }
