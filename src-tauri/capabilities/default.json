@@ -24,6 +24,7 @@
     "clipboard:allow-has-html",
     "clipboard:allow-has-rtf",
     "clipboard:allow-has-files",
+    "clipboard:allow-write-files-uris",
     "clipboard:allow-available-types",
     "clipboard:allow-start-monitor",
     "clipboard:allow-stop-monitor",

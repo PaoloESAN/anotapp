@@ -2,6 +2,7 @@
     import { fade, fly } from "svelte/transition";
     import Trash2 from "@lucide/svelte/icons/trash-2";
     import Copy from "@lucide/svelte/icons/copy";
+    import FileIcon from "@lucide/svelte/icons/file";
     import type { ClipboardItem } from "$lib/types";
 
     let {
@@ -23,6 +24,7 @@
     } = $props();
 
     let cardHeight = $state(0);
+    let cardWidth = $state(0);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -45,6 +47,7 @@
     <!-- Card Container -->
     <div
         bind:clientHeight={cardHeight}
+        bind:clientWidth={cardWidth}
         class="rounded-2xl border border-slate-200/50 dark:border-zinc-700/50 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:border-slate-300 dark:group-hover:border-zinc-600/80 group-hover:shadow-indigo-500/5 ring-1 ring-black/5 dark:ring-white/5 flex flex-col w-full flex-1 min-h-0 relative cursor-grab active:cursor-grabbing"
         onpointerdown={(e) => onDragStart(e, item.id)}
     >
@@ -87,7 +90,11 @@
                             title="Doble clic para renombrar"
                         >
                             {item.title ||
-                                (item.type === "text" ? "TEXTO" : "IMAGEN")}
+                                (item.type === "text"
+                                    ? "TEXTO"
+                                    : item.type === "image"
+                                      ? "IMAGEN"
+                                      : `ARCHIVOS (${item.files?.length ?? 0})`)}
                         </div>
                     {/if}
                 </div>
@@ -184,7 +191,7 @@
                         {/if}
                     </div>
                 {/if}
-            {:else}
+            {:else if item.type === "image"}
                 <div
                     class="flex flex-1 items-center justify-center bg-transparent rounded overflow-hidden w-full h-full relative"
                 >
@@ -193,6 +200,74 @@
                         alt="Clipboard capture"
                         class="w-full h-full object-contain pointer-events-none drop-shadow-lg z-10"
                     />
+                </div>
+            {:else if (item.files?.length ?? 0) === 1}
+                {@const filePath = item.files![0]}
+                {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
+                {#if cardHeight < 80}
+                    <!-- Strip: icon left, text right -->
+                    <div class="w-full h-full flex items-center gap-2 px-2 cursor-grab" title={filePath}>
+                        <FileIcon class="w-5 h-5 shrink-0 text-primary" />
+                        <span class="text-xs font-medium text-slate-700 dark:text-zinc-300 truncate">{fileName}</span>
+                    </div>
+                {:else}
+                    <!-- Tall: icon fills space, scaled text pinned at bottom -->
+                    {@const iconPx = Math.max(24, Math.min(cardWidth - 48, cardHeight - 56))}
+                    {@const fontSize = Math.max(11, Math.min(18, Math.round(iconPx * 0.1)))}
+                    <div class="w-full h-full flex flex-col items-center p-3 gap-2 cursor-grab" title={filePath}>
+                        <div class="flex-1 min-h-0 flex items-center justify-center w-full">
+                            <FileIcon
+                                class="shrink-0 text-primary"
+                                style="width: {iconPx}px; height: {iconPx}px;"
+                            />
+                        </div>
+                        <span
+                            class="shrink-0 text-center break-all font-medium text-slate-600 dark:text-zinc-400 line-clamp-3 w-full leading-snug"
+                            style="font-size: {fontSize}px;"
+                        >{fileName}</span>
+                    </div>
+                {/if}
+            {:else if cardWidth >= 220}
+                <!-- Multiple files, wide: grid — icon above, name below -->
+                {@const iconSize =
+                    cardWidth < 320
+                        ? "w-9 h-9"
+                        : cardWidth < 500
+                          ? "w-11 h-11"
+                          : "w-14 h-14"}
+                {@const colMin =
+                    cardWidth < 320 ? 88 : cardWidth < 500 ? 108 : 132}
+                <div
+                    class="w-full h-full overflow-y-auto grid gap-2 p-1.5 content-start custom-scrollbar"
+                    style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent; grid-template-columns: repeat(auto-fill, minmax({colMin}px, 1fr));"
+                >
+                    {#each item.files ?? [] as filePath}
+                        {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
+                        <div
+                            class="flex flex-col items-center gap-2 p-2.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors min-w-0 cursor-grab"
+                            title={filePath}
+                        >
+                            <FileIcon class="{iconSize} shrink-0 text-primary" />
+                            <span class="text-[10px] leading-tight text-slate-600 dark:text-zinc-400 text-center break-all font-medium w-full line-clamp-2">{fileName}</span>
+                        </div>
+                    {/each}
+                </div>
+            {:else}
+                <!-- Multiple files, narrow: horizontal list — icon left, name right -->
+                <div
+                    class="w-full h-full overflow-y-auto flex flex-col gap-1 custom-scrollbar"
+                    style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent;"
+                >
+                    {#each item.files ?? [] as filePath}
+                        {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
+                        <div
+                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors cursor-grab"
+                            title={filePath}
+                        >
+                            <FileIcon class="w-4 h-4 shrink-0 text-primary" />
+                            <span class="text-xs text-slate-700 dark:text-zinc-300 truncate font-medium">{fileName}</span>
+                        </div>
+                    {/each}
                 </div>
             {/if}
         </div>

@@ -1,7 +1,8 @@
 export interface ClipboardItem {
     id: string;
-    type: "text" | "image";
+    type: "text" | "image" | "files";
     content: string;
+    files?: string[];
     x: number;
     y: number;
     z: number;

@@ -4,6 +4,7 @@
         startListening,
         onTextUpdate,
         onImageUpdate,
+        onFilesUpdate,
     } from "tauri-plugin-clipboard-api";
     import type { ClipboardItem } from "$lib/types";
     import ClipboardCard from "$lib/components/ClipboardCard.svelte";
@@ -89,14 +90,35 @@
         } catch (err) {}
     }
 
+    function handleFilesUpdate(files: string[]) {
+        if (!files || files.length === 0) return;
+        // Deduplicate by comparing sorted paths as a fingerprint
+        const key = [...files].sort().join("|");
+        if (items.find((i) => i.type === "files" && [...(i.files ?? [])].sort().join("|") === key)) return;
+
+        if (files.length === 1) {
+            // Single file: compact square card
+            addItem({ type: "files", content: "", files, w: 200, h: 200 });
+        } else {
+            // Multiple files: expand to fill window width
+            const cardW = Math.min(window.innerWidth - 48, 900);
+            const cols = Math.max(1, Math.floor(cardW / 110));
+            const rows = Math.ceil(files.length / cols);
+            const cardH = Math.min(56 + rows * 110, window.innerHeight - 80);
+            addItem({ type: "files", content: "", files, w: cardW, h: cardH });
+        }
+    }
+
     function addItem({
         type,
         content,
+        files,
         w,
         h,
     }: {
-        type: "text" | "image";
+        type: "text" | "image" | "files";
         content: string;
+        files?: string[];
         w?: number;
         h?: number;
     }) {
@@ -104,6 +126,7 @@
             id: crypto.randomUUID(),
             type,
             content,
+            files,
             x: window.innerWidth / 2 - 150 + (Math.random() * 100 - 50),
             y: window.innerHeight / 2 - 150 + (Math.random() * 100 - 50),
             z: maxZ++,
@@ -145,6 +168,7 @@
             addItem({ type: "text", content: text });
         });
         await onImageUpdate((b64) => handleImageUpdate(b64));
+        await onFilesUpdate((files) => handleFilesUpdate(files));
 
         setTimeout(() => (isReady = true), 300);
     });
@@ -280,6 +304,11 @@
                 );
                 const b64 = item.content.replace(/^data:[^;]+;base64,/, "");
                 await writeImageBase64(b64);
+            } else if (item.type === "files" && item.files?.length) {
+                const { writeFilesURIs } = await import(
+                    "tauri-plugin-clipboard-api"
+                );
+                await writeFilesURIs(item.files);
             }
         } catch (err) {
             console.log(err);
