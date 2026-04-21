@@ -66,7 +66,8 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             onblur={() => (item.editingTitle = false)}
                             onkeydown={(e) => {
-                                if (e.key === "Enter" || e.key === "Escape") item.editingTitle = false;
+                                if (e.key === "Enter" || e.key === "Escape")
+                                    item.editingTitle = false;
                             }}
                             class="text-xs font-semibold tracking-wider text-slate-700 dark:text-zinc-200 bg-slate-100 dark:bg-zinc-800 rounded px-1.5 py-0.5 outline-none ring-1 ring-indigo-500/50 w-full max-w-[150px]"
                         />
@@ -75,13 +76,18 @@
                         <div
                             onpointerdown={(e) => e.stopPropagation()}
                             ondblclick={() => {
-                                if (!item.title) item.title = item.type === "text" ? "TEXTO" : "IMAGEN";
+                                if (!item.title)
+                                    item.title =
+                                        item.type === "text"
+                                            ? "TEXTO"
+                                            : "IMAGEN";
                                 item.editingTitle = true;
                             }}
                             class="text-xs font-semibold tracking-wider text-slate-400 dark:text-zinc-500 truncate cursor-text hover:text-slate-600 dark:hover:text-zinc-300 transition-colors px-1"
                             title="Doble clic para renombrar"
                         >
-                            {item.title || (item.type === "text" ? "TEXTO" : "IMAGEN")}
+                            {item.title ||
+                                (item.type === "text" ? "TEXTO" : "IMAGEN")}
                         </div>
                     {/if}
                 </div>
@@ -111,17 +117,20 @@
             </div>
         {:else}
             <!-- Floating Actions for hideHeaders mode -->
-            <div class="absolute top-2 right-2 flex {cardHeight < 90 ? 'flex-row' : 'flex-col'} gap-1.5 items-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-50">
-                {#if item.type === "text"}
-                    <button
-                        onpointerdown={(e) => e.stopPropagation()}
-                        onclick={() => onCopy(item)}
-                        class="p-2 bg-white/95 dark:bg-zinc-900/95 shadow-md border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-                        title="Copiar"
-                    >
-                        <Copy class="w-4 h-4" />
-                    </button>
-                {/if}
+            <div
+                class="absolute top-2 right-2 flex {cardHeight < 90
+                    ? 'flex-row'
+                    : 'flex-col'} gap-1.5 items-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-50"
+            >
+                <button
+                    onpointerdown={(e) => e.stopPropagation()}
+                    onclick={() => onCopy(item)}
+                    class="p-2 bg-white/95 dark:bg-zinc-900/95 shadow-md border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                    title="Copiar"
+                >
+                    <Copy class="w-4 h-4" />
+                </button>
+
                 <button
                     onpointerdown={(e) => e.stopPropagation()}
                     onclick={() => onDelete(item.id)}

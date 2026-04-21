@@ -338,12 +338,31 @@
                 const { writeImage } = await import(
                     "@tauri-apps/plugin-clipboard-manager"
                 );
-                const res = await fetch(item.content);
-                const blob = await res.blob();
-                const buffer = await blob.arrayBuffer();
-                await writeImage(new Uint8Array(buffer));
+                const { Image: TauriImage } = await import(
+                    "@tauri-apps/api/image"
+                );
+                const img = new Image();
+                await new Promise<void>((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = reject;
+                    img.src = item.content;
+                });
+                const cvs = document.createElement("canvas");
+                cvs.width = img.naturalWidth;
+                cvs.height = img.naturalHeight;
+                const ctx = cvs.getContext("2d")!;
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+                const tauriImg = await TauriImage.new(
+                    new Uint8Array(imageData.data.buffer),
+                    cvs.width,
+                    cvs.height,
+                );
+                await writeImage(tauriImg);
             }
-        } catch (err) {}
+        } catch (err) {
+            console.log(err);
+        }
     }
 </script>
 
