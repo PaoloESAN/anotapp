@@ -102,16 +102,14 @@
                 <div
                     class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 >
-                    {#if item.type === "text"}
-                        <button
-                            onpointerdown={(e) => e.stopPropagation()}
-                            onclick={() => onCopy(item)}
-                            class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors"
-                            title="Copiar"
-                        >
-                            <Copy class="w-3.5 h-3.5" />
-                        </button>
-                    {/if}
+                    <button
+                        onpointerdown={(e) => e.stopPropagation()}
+                        onclick={() => onCopy(item)}
+                        class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors"
+                        title="Copiar"
+                    >
+                        <Copy class="w-3.5 h-3.5" />
+                    </button>
                     <button
                         onpointerdown={(e) => e.stopPropagation()}
                         onclick={() => onDelete(item.id)}
