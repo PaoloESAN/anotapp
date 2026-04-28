@@ -11,6 +11,7 @@
     import EmptyState from "$lib/components/EmptyState.svelte";
     import ClearAllAlert from "$lib/components/ClearAllAlert.svelte";
     import ActionButtons from "$lib/components/ActionButtons.svelte";
+    import PauseButton from "$lib/components/PauseButton.svelte";
     import Titlebar from "$lib/components/Titlebar.svelte";
 
     let _initialItems: ClipboardItem[] = [];
@@ -40,6 +41,7 @@
     let lastImageB64Len = $state(0);
     let isReady = $state(false);
     let isAlertOpen = $state(false);
+    let clipboardPaused = $state(false);
 
     let hideHeaders = $state(_initialHideHeaders);
     let bgPattern = $state(_initialBgPattern);
@@ -71,7 +73,8 @@
             lastImageB64Len = b64.length;
 
             const dataUrl = `data:image/png;base64,${b64}`;
-            if (items.find((i) => i.type === "image" && i.content === dataUrl)) return;
+            if (items.find((i) => i.type === "image" && i.content === dataUrl))
+                return;
 
             const img = new Image();
             await new Promise<void>((res) => {
@@ -83,10 +86,21 @@
 
             let targetW = iw + 16;
             let targetH = ih + 56;
-            if (targetW > 350) { targetH = (350 / targetW) * targetH; targetW = 350; }
-            if (targetH > 400) { targetW = (400 / targetH) * targetW; targetH = 400; }
+            if (targetW > 350) {
+                targetH = (350 / targetW) * targetH;
+                targetW = 350;
+            }
+            if (targetH > 400) {
+                targetW = (400 / targetH) * targetW;
+                targetH = 400;
+            }
 
-            addItem({ type: "image", content: dataUrl, w: targetW, h: targetH });
+            addItem({
+                type: "image",
+                content: dataUrl,
+                w: targetW,
+                h: targetH,
+            });
         } catch (err) {}
     }
 
@@ -94,7 +108,14 @@
         if (!files || files.length === 0) return;
         // Deduplicate by comparing sorted paths as a fingerprint
         const key = [...files].sort().join("|");
-        if (items.find((i) => i.type === "files" && [...(i.files ?? [])].sort().join("|") === key)) return;
+        if (
+            items.find(
+                (i) =>
+                    i.type === "files" &&
+                    [...(i.files ?? [])].sort().join("|") === key,
+            )
+        )
+            return;
 
         if (files.length === 1) {
             // Single file: compact square card
@@ -162,13 +183,19 @@
         // Start the native OS clipboard monitor and subscribe to events
         stopListening = await startListening();
         await onTextUpdate((text) => {
+            if (clipboardPaused) return;
             if (!text || text === lastText) return;
-            if (items.find((i) => i.type === "text" && i.content === text)) return;
+            if (items.find((i) => i.type === "text" && i.content === text))
+                return;
             lastText = text;
             addItem({ type: "text", content: text });
         });
-        await onImageUpdate((b64) => handleImageUpdate(b64));
-        await onFilesUpdate((files) => handleFilesUpdate(files));
+        await onImageUpdate((b64) => {
+            if (!clipboardPaused) handleImageUpdate(b64);
+        });
+        await onFilesUpdate((files) => {
+            if (!clipboardPaused) handleFilesUpdate(files);
+        });
 
         setTimeout(() => (isReady = true), 300);
     });
@@ -357,6 +384,8 @@
     <Titlebar />
 
     <ActionButtons {addEmptyText} bind:hideHeaders bind:bgPattern />
+
+    <PauseButton bind:paused={clipboardPaused} />
 
     <ClearAllAlert count={items.length} onClear={() => (items = [])} />
 </main>
