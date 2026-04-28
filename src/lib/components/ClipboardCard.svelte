@@ -173,19 +173,29 @@
                 {:else}
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <div
-                        onpointerdown={(e) => e.stopPropagation()}
+                        onpointerdown={(e) => {
+                            if (e.target === e.currentTarget) {
+                                onDragStart(e, item.id);
+                            } else {
+                                e.stopPropagation();
+                            }
+                        }}
                         ondblclick={() => (item.editing = true)}
-                        class="text-slate-800 dark:text-zinc-200 text-sm font-medium leading-relaxed w-full h-full overflow-y-auto pr-3 custom-scrollbar wrap-break-word cursor-text select-text hover:bg-slate-100/50 dark:hover:bg-zinc-800/20 rounded transition-colors"
-                        style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent;"
+                        class="text-slate-800 dark:text-zinc-200 text-sm font-medium leading-relaxed w-full h-full overflow-y-auto pr-3 custom-scrollbar wrap-break-word select-text rounded"
+                        style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent; cursor: grab;"
                         title="Doble clic para editar"
                     >
                         {#if !item.content || item.content.trim() === ""}
                             <span
-                                class="text-slate-400/60 dark:text-zinc-500/50 italic select-none"
+                                class="text-slate-400/60 dark:text-zinc-500/50 italic select-none cursor-default"
                                 >Escribe aquí...</span
                             >
                         {:else}
-                            {item.content}
+                            <span
+                                class="select-text cursor-text hover:bg-slate-100/50 dark:hover:bg-zinc-800/20 rounded transition-colors inline-block w-full"
+                                onpointerdown={(e) => e.stopPropagation()}
+                                >{item.content}</span
+                            >
                         {/if}
                     </div>
                 {/if}
@@ -204,16 +214,33 @@
                 {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
                 {#if cardHeight < 80}
                     <!-- Strip: icon left, text right -->
-                    <div class="w-full h-full flex items-center gap-2 px-2 cursor-grab" title={filePath}>
+                    <div
+                        class="w-full h-full flex items-center gap-2 px-2 cursor-grab"
+                        title={filePath}
+                    >
                         <FileIcon class="w-5 h-5 shrink-0 text-primary" />
-                        <span class="text-xs font-medium text-slate-700 dark:text-zinc-300 truncate">{fileName}</span>
+                        <span
+                            class="text-xs font-medium text-slate-700 dark:text-zinc-300 truncate"
+                            >{fileName}</span
+                        >
                     </div>
                 {:else}
                     <!-- Tall: icon fills space, scaled text pinned at bottom -->
-                    {@const iconPx = Math.max(24, Math.min(cardWidth - 48, cardHeight - 56))}
-                    {@const fontSize = Math.max(11, Math.min(18, Math.round(iconPx * 0.1)))}
-                    <div class="w-full h-full flex flex-col items-center p-3 gap-2 cursor-grab" title={filePath}>
-                        <div class="flex-1 min-h-0 flex items-center justify-center w-full">
+                    {@const iconPx = Math.max(
+                        24,
+                        Math.min(cardWidth - 48, cardHeight - 56),
+                    )}
+                    {@const fontSize = Math.max(
+                        11,
+                        Math.min(18, Math.round(iconPx * 0.1)),
+                    )}
+                    <div
+                        class="w-full h-full flex flex-col items-center p-3 gap-2 cursor-grab"
+                        title={filePath}
+                    >
+                        <div
+                            class="flex-1 min-h-0 flex items-center justify-center w-full"
+                        >
                             <FileIcon
                                 class="shrink-0 text-primary"
                                 style="width: {iconPx}px; height: {iconPx}px;"
@@ -221,8 +248,8 @@
                         </div>
                         <span
                             class="shrink-0 text-center break-all font-medium text-slate-600 dark:text-zinc-400 line-clamp-3 w-full leading-snug"
-                            style="font-size: {fontSize}px;"
-                        >{fileName}</span>
+                            style="font-size: {fontSize}px;">{fileName}</span
+                        >
                     </div>
                 {/if}
             {:else if cardWidth >= 220}
@@ -240,13 +267,19 @@
                     style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent; grid-template-columns: repeat(auto-fill, minmax({colMin}px, 1fr));"
                 >
                     {#each item.files ?? [] as filePath}
-                        {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
+                        {@const fileName =
+                            filePath.split(/[/\\]/).pop() ?? filePath}
                         <div
                             class="flex flex-col items-center gap-2 p-2.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors min-w-0 cursor-grab"
                             title={filePath}
                         >
-                            <FileIcon class="{iconSize} shrink-0 text-primary" />
-                            <span class="text-[10px] leading-tight text-slate-600 dark:text-zinc-400 text-center break-all font-medium w-full line-clamp-2">{fileName}</span>
+                            <FileIcon
+                                class="{iconSize} shrink-0 text-primary"
+                            />
+                            <span
+                                class="text-[10px] leading-tight text-slate-600 dark:text-zinc-400 text-center break-all font-medium w-full line-clamp-2"
+                                >{fileName}</span
+                            >
                         </div>
                     {/each}
                 </div>
@@ -257,13 +290,17 @@
                     style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent;"
                 >
                     {#each item.files ?? [] as filePath}
-                        {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
+                        {@const fileName =
+                            filePath.split(/[/\\]/).pop() ?? filePath}
                         <div
                             class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors cursor-grab"
                             title={filePath}
                         >
                             <FileIcon class="w-4 h-4 shrink-0 text-primary" />
-                            <span class="text-xs text-slate-700 dark:text-zinc-300 truncate font-medium">{fileName}</span>
+                            <span
+                                class="text-xs text-slate-700 dark:text-zinc-300 truncate font-medium"
+                                >{fileName}</span
+                            >
                         </div>
                     {/each}
                 </div>
