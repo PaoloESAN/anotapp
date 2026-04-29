@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/PaoloESAN/anotapp/releases/download/v0.1.0/Anotapp.exe">
+  <a href="https://github.com/PaoloESAN/anotapp/releases/latest/download/Anotapp.exe">
     <img src="https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge" alt="Download Anotapp" />
   </a>
 </p>
