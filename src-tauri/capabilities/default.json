@@ -11,6 +11,8 @@
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-maximize",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-is-fullscreen",
     "clipboard:allow-read-text",
     "clipboard:allow-read-image-base64",
     "clipboard:allow-read-image-binary",

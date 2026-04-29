@@ -3,6 +3,7 @@
 	import favicon from "$lib/assets/favicon.svg";
 	import { ModeWatcher } from "mode-watcher";
 	import { onMount } from "svelte";
+	import { getCurrentWindow } from "@tauri-apps/api/window";
 
 	let { children } = $props();
 
@@ -17,8 +18,18 @@
 			);
 		}
 	});
+
+	async function handleKeydown(e: KeyboardEvent) {
+		if (e.key === "F11") {
+			e.preventDefault();
+			const win = getCurrentWindow();
+			const isFullscreen = await win.isFullscreen();
+			await win.setFullscreen(!isFullscreen);
+		}
+	}
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 <ModeWatcher />
 {@render children()}
