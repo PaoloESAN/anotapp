@@ -1,14 +1,17 @@
 <script lang="ts">
     import Plus from "@lucide/svelte/icons/plus";
     import SettingsIcon from "@lucide/svelte/icons/settings";
+    import Smartphone from "@lucide/svelte/icons/smartphone";
     import SettingsModal from "./SettingsModal.svelte";
 
     let {
         addEmptyText,
+        openMobileLink,
         hideHeaders = $bindable(false),
         bgPattern = $bindable("grid"),
     }: {
         addEmptyText: () => void;
+        openMobileLink: () => void;
         hideHeaders: boolean;
         bgPattern: string;
     } = $props();
@@ -18,6 +21,13 @@
 
 <!-- Action Buttons (Bottom Left) -->
 <div class="fixed bottom-6 left-6 z-50 flex flex-col items-center gap-3">
+    <button
+        onclick={openMobileLink}
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-md text-muted-foreground shadow-md transition-all hover:bg-muted hover:border-border hover:text-foreground hover:scale-105 active:scale-95"
+        title="Vincular Celular"
+    >
+        <Smartphone class="w-5 h-5" />
+    </button>
     <button
         onclick={addEmptyText}
         class="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-background/80 backdrop-blur-md text-primary shadow-xl transition-all hover:bg-primary/10 hover:border-primary/50 hover:text-primary/80 hover:scale-105 active:scale-95"

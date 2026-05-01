@@ -13,6 +13,8 @@
     import ActionButtons from "$lib/components/ActionButtons.svelte";
     import PauseButton from "$lib/components/PauseButton.svelte";
     import Titlebar from "$lib/components/Titlebar.svelte";
+    import MobileLinkModal from "$lib/components/MobileLinkModal.svelte";
+    import type { DataConnection } from "peerjs";
 
     let _initialItems: ClipboardItem[] = [];
     let _initialZ = 1;
@@ -46,6 +48,10 @@
     let hideHeaders = $state(_initialHideHeaders);
     let bgPattern = $state(_initialBgPattern);
     let customBgImage = $state("");
+
+    let isMobileLinkOpen = $state(false);
+    let peerId = $state("");
+    let peerInstance: any = null;
 
     $effect(() => {
         // Deeply track items via JSON serialization
@@ -102,6 +108,21 @@
                 h: targetH,
             });
         } catch (err) {}
+    }
+
+    async function handleIncomingPeerData(data: any) {
+        if (!data || !data.type) return;
+        if (data.type === "text" && data.content) {
+            if (items.find((i) => i.type === "text" && i.content === data.content)) return;
+            addItem({ type: "text", content: data.content });
+        } else if (data.type === "image" && data.content) {
+            // content could be base64
+            let b64 = data.content;
+            if (b64.startsWith("data:image")) {
+                b64 = b64.split(",")[1];
+            }
+            await handleImageUpdate(b64);
+        }
     }
 
     function handleFilesUpdate(files: string[]) {
@@ -197,11 +218,32 @@
             if (!clipboardPaused) handleFilesUpdate(files);
         });
 
+        // Initialize PeerJS for WebRTC Mobile Link
+        try {
+            const { Peer } = await import("peerjs");
+            // Generate a secure unique ID to prevent collisions across all users
+            const id = "anotapp-desk-" + crypto.randomUUID();
+            peerInstance = new Peer(id);
+            
+            peerInstance.on("open", (id: string) => {
+                peerId = id;
+            });
+
+            peerInstance.on("connection", (conn: DataConnection) => {
+                conn.on("data", (data: any) => {
+                    handleIncomingPeerData(data);
+                });
+            });
+        } catch (err) {
+            console.error("Failed to initialize PeerJS:", err);
+        }
+
         setTimeout(() => (isReady = true), 300);
     });
 
     onDestroy(async () => {
         if (stopListening) await stopListening();
+        if (peerInstance) peerInstance.destroy();
     });
 
     let activeDrag: { id: string; offsetX: number; offsetY: number } | null =
@@ -383,7 +425,9 @@
 
     <Titlebar />
 
-    <ActionButtons {addEmptyText} bind:hideHeaders bind:bgPattern />
+    <ActionButtons {addEmptyText} openMobileLink={() => isMobileLinkOpen = true} bind:hideHeaders bind:bgPattern />
+
+    <MobileLinkModal bind:open={isMobileLinkOpen} {peerId} />
 
     <PauseButton bind:paused={clipboardPaused} />
 
