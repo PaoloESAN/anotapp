@@ -9,10 +9,7 @@
 
     let canvas = $state<HTMLCanvasElement>();
 
-    // We will assume the mobile UI is hosted on a free public domain.
-    // For local testing, this could be the local IP, but Vercel/Netlify is recommended for production.
-    // In this example, we generate a placeholder URL that the user should replace with their actual hosted domain.
-    const baseUrl = "https://anotapp-mobile.vercel.app";
+    const baseUrl = "https://anotapp-mobile.vercel.app/mobile";
 
     $effect(() => {
         if (open && canvas && peerId) {
