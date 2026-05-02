@@ -19,7 +19,7 @@
                 url,
                 {
                     width: 250,
-                    margin: 2,
+                    margin: 1,
                     color: {
                         dark: "#000000FF",
                         light: "#FFFFFFFF",
@@ -35,7 +35,8 @@
 
 <Dialog.Root bind:open>
     <Dialog.Content
-        class="sm:max-w-md bg-background border-border text-foreground p-6 rounded-xl shadow-2xl flex flex-col items-center"
+        class="sm:max-w-md w-[95vw] max-h-[90vh] overflow-y-auto bg-background border-border text-foreground p-4 sm:p-6 rounded-xl shadow-2xl flex flex-col items-center [&::-webkit-scrollbar]:hidden"
+        style="scrollbar-width: none;"
     >
         <Dialog.Header class="shrink-0 w-full text-center mb-4">
             <Dialog.Title
@@ -44,36 +45,34 @@
                 Vincular Celular
             </Dialog.Title>
             <Dialog.Description class="text-muted-foreground">
-                Escanea este código QR con tu celular para conectarte por
-                WebRTC.
+                Escanea este código QR con tu celular para conectarte.
             </Dialog.Description>
         </Dialog.Header>
 
         <div
-            class="bg-white p-4 rounded-xl shadow-inner flex items-center justify-center"
+            class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 flex items-center justify-center"
         >
-            <canvas bind:this={canvas}></canvas>
+            <canvas bind:this={canvas} class="block max-w-full h-auto rounded-md"></canvas>
         </div>
 
         {#if peerId}
-            <div class="mt-4 text-center">
+            <div class="mt-3 text-center w-full">
                 <p
                     class="text-xs text-muted-foreground uppercase tracking-wider font-semibold"
                 >
                     ID de Conexión
                 </p>
                 <p
-                    class="font-mono bg-muted px-3 py-1 rounded-md text-sm mt-1 select-all"
+                    class="font-mono bg-muted px-3 py-1.5 rounded-md text-sm mt-1.5 select-all break-all"
                 >
                     {peerId}
                 </p>
             </div>
         {/if}
 
-        <p class="text-xs text-center text-muted-foreground mt-4 px-4">
-            Asegúrate de tener conexión a internet. La transferencia de imágenes
-            se realizará directamente entre ambos dispositivos de forma rápida y
-            segura.
+        <p class="text-xs text-center text-muted-foreground px-4">
+            Escanea el codigo para poder enviar texto e imagenes desde tu
+            celular.
         </p>
     </Dialog.Content>
 </Dialog.Root>

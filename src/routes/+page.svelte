@@ -62,28 +62,35 @@
 
     function onScanText(item: ClipboardItem) {
         if (item.type !== "image" || !item.content) return;
-        
+
         ocrImageSrc = item.content;
         ocrText = "";
         isOcrModalOpen = true;
     }
 
-    async function handleExtractText(rect?: { top: number, left: number, width: number, height: number }) {
+    async function handleExtractText(rect?: {
+        top: number;
+        left: number;
+        width: number;
+        height: number;
+    }) {
         if (!ocrImageSrc) return;
-        
+
         ocrLoading = true;
         ocrText = "";
-        
+
         try {
-            const worker = await createWorker('eng+spa');
-            
+            const worker = await createWorker("eng+spa");
+
             let recognizeOptions = undefined;
             if (rect) {
                 // Tesseract.js rectangle format: { top, left, width, height }
                 recognizeOptions = { rectangle: rect };
             }
-            
-            const { data: { text } } = await worker.recognize(ocrImageSrc, recognizeOptions);
+
+            const {
+                data: { text },
+            } = await worker.recognize(ocrImageSrc, recognizeOptions);
             await worker.terminate();
             ocrText = text;
         } catch (e: any) {
@@ -154,7 +161,12 @@
     async function handleIncomingPeerData(data: any) {
         if (!data || !data.type) return;
         if (data.type === "text" && data.content) {
-            if (items.find((i) => i.type === "text" && i.content === data.content)) return;
+            if (
+                items.find(
+                    (i) => i.type === "text" && i.content === data.content,
+                )
+            )
+                return;
             addItem({ type: "text", content: data.content });
         } else if (data.type === "image" && data.content) {
             // content could be base64
@@ -262,10 +274,9 @@
         // Initialize PeerJS for WebRTC Mobile Link
         try {
             const { Peer } = await import("peerjs");
-            // Generate a secure unique ID to prevent collisions across all users
-            const id = "anotapp-desk-" + crypto.randomUUID();
+            const id = crypto.randomUUID();
             peerInstance = new Peer(id);
-            
+
             peerInstance.on("open", (id: string) => {
                 peerId = id;
             });
@@ -467,15 +478,20 @@
 
     <Titlebar />
 
-    <ActionButtons {addEmptyText} openMobileLink={() => isMobileLinkOpen = true} bind:hideHeaders bind:bgPattern />
+    <ActionButtons
+        {addEmptyText}
+        openMobileLink={() => (isMobileLinkOpen = true)}
+        bind:hideHeaders
+        bind:bgPattern
+    />
 
     <MobileLinkModal bind:open={isMobileLinkOpen} {peerId} />
 
-    <OcrResultModal 
-        bind:open={isOcrModalOpen} 
-        bind:text={ocrText} 
+    <OcrResultModal
+        bind:open={isOcrModalOpen}
+        bind:text={ocrText}
         imageSrc={ocrImageSrc}
-        isLoading={ocrLoading} 
+        isLoading={ocrLoading}
         onExtract={handleExtractText}
         onPinToCanvas={(text) => {
             addItem({ type: "text", content: text });
