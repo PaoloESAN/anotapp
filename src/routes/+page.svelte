@@ -14,7 +14,9 @@
     import PauseButton from "$lib/components/PauseButton.svelte";
     import Titlebar from "$lib/components/Titlebar.svelte";
     import MobileLinkModal from "$lib/components/MobileLinkModal.svelte";
+    import OcrResultModal from "$lib/components/OcrResultModal.svelte";
     import type { DataConnection } from "peerjs";
+    import { createWorker } from "tesseract.js";
 
     let _initialItems: ClipboardItem[] = [];
     let _initialZ = 1;
@@ -52,6 +54,45 @@
     let isMobileLinkOpen = $state(false);
     let peerId = $state("");
     let peerInstance: any = null;
+
+    let isOcrModalOpen = $state(false);
+    let ocrText = $state("");
+    let ocrLoading = $state(false);
+    let ocrImageSrc = $state("");
+
+    function onScanText(item: ClipboardItem) {
+        if (item.type !== "image" || !item.content) return;
+        
+        ocrImageSrc = item.content;
+        ocrText = "";
+        isOcrModalOpen = true;
+    }
+
+    async function handleExtractText(rect?: { top: number, left: number, width: number, height: number }) {
+        if (!ocrImageSrc) return;
+        
+        ocrLoading = true;
+        ocrText = "";
+        
+        try {
+            const worker = await createWorker('eng+spa');
+            
+            let recognizeOptions = undefined;
+            if (rect) {
+                // Tesseract.js rectangle format: { top, left, width, height }
+                recognizeOptions = { rectangle: rect };
+            }
+            
+            const { data: { text } } = await worker.recognize(ocrImageSrc, recognizeOptions);
+            await worker.terminate();
+            ocrText = text;
+        } catch (e: any) {
+            console.error("OCR Error:", e);
+            ocrText = "Ocurrió un error al extraer el texto: " + e;
+        } finally {
+            ocrLoading = false;
+        }
+    }
 
     $effect(() => {
         // Deeply track items via JSON serialization
@@ -419,6 +460,7 @@
             {onResizeStart}
             {onDelete}
             {onCopy}
+            {onScanText}
             {hideHeaders}
         />
     {/each}
@@ -428,6 +470,17 @@
     <ActionButtons {addEmptyText} openMobileLink={() => isMobileLinkOpen = true} bind:hideHeaders bind:bgPattern />
 
     <MobileLinkModal bind:open={isMobileLinkOpen} {peerId} />
+
+    <OcrResultModal 
+        bind:open={isOcrModalOpen} 
+        bind:text={ocrText} 
+        imageSrc={ocrImageSrc}
+        isLoading={ocrLoading} 
+        onExtract={handleExtractText}
+        onPinToCanvas={(text) => {
+            addItem({ type: "text", content: text });
+        }}
+    />
 
     <PauseButton bind:paused={clipboardPaused} />
 
