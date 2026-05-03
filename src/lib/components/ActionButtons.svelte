@@ -2,7 +2,6 @@
     import Plus from "@lucide/svelte/icons/plus";
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import Smartphone from "@lucide/svelte/icons/smartphone";
-    import SettingsModal from "./modals/SettingsModal.svelte";
     import { desktopState } from "../../routes/desktop-state.svelte";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import Type from "@lucide/svelte/icons/type";
@@ -11,16 +10,16 @@
     let {
         addEmptyText,
         openMobileLink,
+        onSettings,
         hideHeaders = $bindable(false),
         bgPattern = $bindable("grid"),
     }: {
         addEmptyText: () => void;
         openMobileLink: () => void;
+        onSettings: () => void;
         hideHeaders: boolean;
         bgPattern: string;
     } = $props();
-
-    let isSettingsOpen = $state(false);
 
     let imageInput: HTMLInputElement;
 
@@ -95,12 +94,10 @@
     </DropdownMenu.Root>
 
     <button
-        onclick={() => (isSettingsOpen = true)}
+        onclick={onSettings}
         class="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-md text-muted-foreground shadow-md transition-all hover:bg-muted hover:border-border hover:text-foreground hover:scale-105 active:scale-95"
         title="Configuración"
     >
         <SettingsIcon class="w-5 h-5" />
     </button>
 </div>
-
-<SettingsModal bind:open={isSettingsOpen} bind:hideHeaders bind:bgPattern />

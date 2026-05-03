@@ -14,16 +14,24 @@
     import PauseButton from "$lib/components/PauseButton.svelte";
     import Titlebar from "$lib/components/Titlebar.svelte";
     import MobileLinkModal from "$lib/components/modals/MobileLinkModal.svelte";
+    import SettingsModal from "$lib/components/modals/SettingsModal.svelte";
     import OcrResultModal from "$lib/components/modals/OcrResultModal.svelte";
     import CanvasBackground from "$lib/components/CanvasBackground.svelte";
     import WorkspacesBar from "$lib/components/WorkspacesBar.svelte";
+    import CardContextMenu from "$lib/components/CardContextMenu.svelte";
     import type { DataConnection } from "peerjs";
     import { desktopState } from "./desktop-state.svelte";
     import { interactionManager } from "./interaction-manager.svelte";
 
     desktopState.initSerialization();
 
+    let isSettingsOpen = $state(false);
+
     let stopListening: (() => Promise<void>) | null = null;
+
+    function onDelete(id: string) {
+        desktopState.items = desktopState.items.filter((i) => i.id !== id);
+    }
 
     function onScanText(item: ClipboardItem) {
         if (item.type !== "image" || !item.content) return;
@@ -143,21 +151,27 @@
             onDragStart={(e, id) => interactionManager.onDragStart(e, id)}
             onResizeStart={(e, id, dir) =>
                 interactionManager.onResizeStart(e, id, dir)}
-            onDelete={(id) =>
-                (desktopState.items = desktopState.items.filter(
-                    (i) => i.id !== id,
-                ))}
+            {onDelete}
             {onCopy}
             {onScanText}
             hideHeaders={desktopState.hideHeaders}
+            hideCardButtons={desktopState.hideCardButtons}
         />
     {/each}
 
     <Titlebar />
 
+    <SettingsModal
+        bind:open={isSettingsOpen}
+        bind:hideHeaders={desktopState.hideHeaders}
+        bind:hideCardButtons={desktopState.hideCardButtons}
+        bind:bgPattern={desktopState.bgPattern}
+    />
+
     <ActionButtons
         addEmptyText={() => desktopState.addEmptyText()}
         openMobileLink={() => (desktopState.isMobileLinkOpen = true)}
+        onSettings={() => (isSettingsOpen = true)}
         bind:hideHeaders={desktopState.hideHeaders}
         bind:bgPattern={desktopState.bgPattern}
     />
@@ -167,6 +181,8 @@
         peerId={desktopState.peerId}
     />
 
+    <CardContextMenu {onCopy} {onDelete} {onScanText} />
+    
     <OcrResultModal
         bind:open={desktopState.isOcrModalOpen}
         bind:text={desktopState.ocrText}

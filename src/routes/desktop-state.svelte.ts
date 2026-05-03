@@ -34,8 +34,21 @@ class DesktopState {
     isReady = $state(false);
     clipboardPaused = $state(false);
     hideHeaders = $state(true);
+    hideCardButtons = $state(false);
     bgPattern = $state("grid");
     customBgImage = $state("");
+    
+    contextMenu = $state<{
+        open: boolean;
+        x: number;
+        y: number;
+        item: any | null;
+    }>({
+        open: false,
+        x: 0,
+        y: 0,
+        item: null,
+    });
     
     peerId = $state("");
     peerInstance: any = null;
@@ -73,6 +86,9 @@ class DesktopState {
                 const savedHeaders = localStorage.getItem("anotapp-hide-headers");
                 if (savedHeaders !== null) this.hideHeaders = savedHeaders === "true";
 
+                const savedCardButtons = localStorage.getItem("anotapp-hide-card-buttons");
+                if (savedCardButtons !== null) this.hideCardButtons = savedCardButtons === "true";
+
                 const savedBg = localStorage.getItem("anotapp-bg-pattern");
                 if (savedBg) this.bgPattern = savedBg;
                 
@@ -89,14 +105,18 @@ class DesktopState {
             const serializedWS = JSON.stringify(this.workspaces);
             const activeWS = this.activeWorkspaceId;
             const hideState = this.hideHeaders;
+            const hideCardButtons = this.hideCardButtons;
             const bgState = this.bgPattern;
+            const customBg = this.customBgImage;
 
             const timer = setTimeout(() => {
                 try {
                     localStorage.setItem("anotapp-workspaces", serializedWS);
                     localStorage.setItem("anotapp-active-ws", activeWS);
                     localStorage.setItem("anotapp-hide-headers", String(hideState));
+                    localStorage.setItem("anotapp-hide-card-buttons", String(hideCardButtons));
                     localStorage.setItem("anotapp-bg-pattern", bgState);
+                    localStorage.setItem("anotapp-custom-bg-image", customBg);
                 } catch (err) {
                     console.warn("Storage exception", err);
                 }

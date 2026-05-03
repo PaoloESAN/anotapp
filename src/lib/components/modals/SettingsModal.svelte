@@ -9,10 +9,12 @@
     let {
         open = $bindable(false),
         hideHeaders = $bindable(false),
+        hideCardButtons = $bindable(false),
         bgPattern = $bindable("grid"),
     }: {
         open: boolean;
         hideHeaders: boolean;
+        hideCardButtons: boolean;
         bgPattern: string;
     } = $props();
 
@@ -78,7 +80,7 @@
     function handleCustomImage(e: Event) {
         const input = e.target as HTMLInputElement;
         if (!input.files || input.files.length === 0) return;
-        
+
         const file = input.files[0];
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -88,7 +90,6 @@
                 const ctx = canvas.getContext("2d");
                 let w = img.width;
                 let h = img.height;
-                // Escalar a máximo 1920px para no reventar el LocalStorage
                 if (w > 1920) {
                     h = (1920 / w) * h;
                     w = 1920;
@@ -97,12 +98,16 @@
                 canvas.height = h;
                 ctx?.drawImage(img, 0, 0, w, h);
                 const dataUrl = canvas.toDataURL("image/webp", 0.8);
-                
+
                 try {
                     localStorage.setItem("anotapp-custom-bg-image", dataUrl);
                     bgPattern = "custom-image";
-                    window.dispatchEvent(new CustomEvent("anotapp-bg-updated", { detail: dataUrl }));
-                } catch(e) {
+                    window.dispatchEvent(
+                        new CustomEvent("anotapp-bg-updated", {
+                            detail: dataUrl,
+                        }),
+                    );
+                } catch (e) {
                     console.error("Imagen muy grande para guardar");
                 }
             };
@@ -140,6 +145,19 @@
                     >
                 </div>
                 <Switch bind:checked={hideHeaders} />
+            </div>
+
+            <!-- Card Buttons Control -->
+            <div
+                class="flex items-center justify-between gap-3 bg-muted/40 p-4 rounded-xl border border-border/50 shadow-sm"
+            >
+                <div class="space-y-1">
+                    <Label
+                        class="text-sm font-semibold tracking-wide text-foreground"
+                        >Ocultar Botones de Tarjeta</Label
+                    >
+                </div>
+                <Switch bind:checked={hideCardButtons} />
             </div>
 
             <!-- Theme Control -->
@@ -223,7 +241,9 @@
                         <button
                             onclick={() => {
                                 if (p.id === "custom-image") {
-                                    document.getElementById("hidden-bg-upload")?.click();
+                                    document
+                                        .getElementById("hidden-bg-upload")
+                                        ?.click();
                                 } else {
                                     bgPattern = p.id;
                                 }
@@ -252,12 +272,12 @@
             </div>
 
             <!-- Input oculto para cargar la imagen -->
-            <input 
-                type="file" 
-                id="hidden-bg-upload" 
-                accept="image/*" 
-                class="hidden" 
-                onchange={handleCustomImage} 
+            <input
+                type="file"
+                id="hidden-bg-upload"
+                accept="image/*"
+                class="hidden"
+                onchange={handleCustomImage}
             />
         </div>
     </Dialog.Content>

@@ -13,6 +13,7 @@ class InteractionManager {
     } | null>(null);
 
     onDragStart(e: PointerEvent, id: string) {
+        if (e.button !== 0) return;
         const item = desktopState.items.find((i) => i.id === id);
         if (!item) return;
         item.z = desktopState.maxZ++;

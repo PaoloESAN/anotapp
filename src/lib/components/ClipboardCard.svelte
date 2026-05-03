@@ -1,9 +1,11 @@
 <script lang="ts">
     import { fade, fly } from "svelte/transition";
+    import { tick } from "svelte";
     import Trash2 from "@lucide/svelte/icons/trash-2";
     import Copy from "@lucide/svelte/icons/copy";
     import FileIcon from "@lucide/svelte/icons/file";
     import ScanText from "@lucide/svelte/icons/scan-text";
+    import MoveRight from "@lucide/svelte/icons/move-right";
     import type { ClipboardItem } from "$lib/types";
     import { desktopState } from "../../routes/desktop-state.svelte";
 
@@ -16,6 +18,7 @@
         onDelete,
         onScanText,
         hideHeaders,
+        hideCardButtons,
     }: {
         item: ClipboardItem;
         onBringToFront: (id: string) => void;
@@ -25,6 +28,7 @@
         onDelete: (id: string) => void;
         onScanText?: (item: ClipboardItem) => void;
         hideHeaders?: boolean;
+        hideCardButtons?: boolean;
     } = $props();
 
     let cardHeight = $state(0);
@@ -38,7 +42,10 @@
     id="card-{item.id}"
     in:fly={{ y: 20, duration: 400, opacity: 0 }}
     out:fade={{ duration: 200 }}
-    class="absolute group select-none flex flex-col {desktopState.draggedItemId === item.id ? 'pointer-events-none' : ''}"
+    class="absolute group select-none flex flex-col {desktopState.draggedItemId ===
+    item.id
+        ? 'pointer-events-none'
+        : ''}"
     style="left: {item.x}px; top: {item.y}px; z-index: {item.z}; {item.w
         ? `width: ${item.w}px;`
         : item.type === 'text'
@@ -48,7 +55,24 @@
         : item.type === 'text'
           ? 'max-height: clamp(120px, 35vh, 200px);'
           : ''}"
-    onpointerdown={() => onBringToFront(item.id)}
+    onpointerdown={(e) => {
+        if (e.button === 0) onBringToFront(item.id);
+    }}
+    oncontextmenu={async (e) => {
+        e.preventDefault();
+        // Si ya está abierto, lo cerramos primero para forzar el reposicionamiento
+        if (desktopState.contextMenu.open) {
+            desktopState.contextMenu.open = false;
+            await tick();
+        }
+        
+        desktopState.contextMenu = {
+            open: true,
+            x: e.clientX,
+            y: e.clientY,
+            item: item,
+        };
+    }}
 >
     <!-- Card Container -->
     <div
@@ -79,7 +103,10 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             onblur={() => (item.editingTitle = false)}
                             onkeydown={(e) => {
-                                if (e.key === "Enter" || e.key === "Escape")
+                                if (
+                                    e.key === "Enter" ||
+                                    e.key === "Escape"
+                                )
                                     item.editingTitle = false;
                             }}
                             class="text-xs font-semibold tracking-wider text-slate-700 dark:text-zinc-200 bg-slate-100 dark:bg-zinc-800 rounded px-1.5 py-0.5 outline-none ring-1 ring-indigo-500/50 w-full max-w-[150px]"
@@ -142,7 +169,9 @@
                     </button>
                 </div>
             </div>
-        {:else}
+        {/if}
+
+        {#if !hideCardButtons}
             <!-- Floating Actions for hideHeaders mode -->
             <div
                 class="absolute top-2 right-2 flex {cardHeight < 90
@@ -181,7 +210,8 @@
 
         <!-- Content Area -->
         <div
-            class="flex-1 flex overflow-hidden min-h-0 {item.type === 'image'
+            class="flex-1 flex overflow-hidden min-h-0 {item.type ===
+            'image'
                 ? 'p-1.5'
                 : 'p-4'}"
         >
@@ -195,7 +225,8 @@
                         onpointerdown={(e) => e.stopPropagation()}
                         onblur={() => (item.editing = false)}
                         onkeydown={(e) => {
-                            if (e.key === "Escape") item.editing = false;
+                            if (e.key === "Escape")
+                                item.editing = false;
                             if (e.key === "Enter" && e.ctrlKey)
                                 item.editing = false;
                         }}
@@ -229,7 +260,8 @@
                                 role="presentation"
                                 tabindex="-1"
                                 class="select-text cursor-text hover:bg-slate-100/50 dark:hover:bg-zinc-800/20 rounded transition-colors inline-block w-full"
-                                onpointerdown={(e) => e.stopPropagation()}
+                                onpointerdown={(e) =>
+                                    e.stopPropagation()}
                                 >{item.content}</span
                             >
                         {/if}
@@ -247,14 +279,17 @@
                 </div>
             {:else if (item.files?.length ?? 0) === 1}
                 {@const filePath = item.files![0]}
-                {@const fileName = filePath.split(/[/\\]/).pop() ?? filePath}
+                {@const fileName =
+                    filePath.split(/[/\\]/).pop() ?? filePath}
                 {#if cardHeight < 80}
                     <!-- Strip: icon left, text right -->
                     <div
                         class="w-full h-full flex items-center gap-2 px-2 cursor-grab"
                         title={filePath}
                     >
-                        <FileIcon class="w-5 h-5 shrink-0 text-primary" />
+                        <FileIcon
+                            class="w-5 h-5 shrink-0 text-primary"
+                        />
                         <span
                             class="text-xs font-medium text-slate-700 dark:text-zinc-300 truncate"
                             >{fileName}</span
@@ -284,7 +319,8 @@
                         </div>
                         <span
                             class="shrink-0 text-center break-all font-medium text-slate-600 dark:text-zinc-400 line-clamp-3 w-full leading-snug"
-                            style="font-size: {fontSize}px;">{fileName}</span
+                            style="font-size: {fontSize}px;"
+                            >{fileName}</span
                         >
                     </div>
                 {/if}
@@ -332,7 +368,9 @@
                             class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors cursor-grab"
                             title={filePath}
                         >
-                            <FileIcon class="w-4 h-4 shrink-0 text-primary" />
+                            <FileIcon
+                                class="w-4 h-4 shrink-0 text-primary"
+                            />
                             <span
                                 class="text-xs text-slate-700 dark:text-zinc-300 truncate font-medium"
                                 >{fileName}</span
