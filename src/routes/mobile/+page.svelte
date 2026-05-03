@@ -12,6 +12,7 @@
     import ArrowUp from "@lucide/svelte/icons/arrow-up";
     import Sun from "@lucide/svelte/icons/sun";
     import Moon from "@lucide/svelte/icons/moon";
+    import ChevronLeft from "@lucide/svelte/icons/chevron-left";
     import { setMode, resetMode } from "mode-watcher";
 
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -159,6 +160,26 @@
         }
     }
 
+    function disconnect() {
+        if (connection) {
+            connection.close();
+            connection = null;
+        }
+        if (peerInstance) {
+            peerInstance.destroy();
+            peerInstance = null;
+        }
+        peerId = "";
+        status = "idle";
+        
+        if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("peerId");
+            window.history.replaceState({}, "", url);
+            sessionStorage.removeItem("anotapp_peerId");
+        }
+    }
+
     function handleConnectManual(e?: Event) {
         if (e) e.preventDefault();
         if (!inputCode.trim()) return;
@@ -299,6 +320,19 @@
     class="min-h-screen bg-background text-foreground flex flex-col font-sans p-4 sm:p-6 transition-colors duration-500"
 >
     <header class="text-center mb-8 pt-6 h-20 relative">
+        <div class="absolute left-0 top-4">
+            {#if status !== "idle" && status !== "error" && !isScanning}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    class="rounded-full text-muted-foreground hover:text-foreground"
+                    onclick={disconnect}
+                >
+                    <ChevronLeft class="h-6 w-6" />
+                </Button>
+            {/if}
+        </div>
+        
         <div class="absolute right-0 top-4">
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
