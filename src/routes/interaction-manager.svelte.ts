@@ -21,6 +21,8 @@ class InteractionManager {
             offsetX: e.clientX - item.x,
             offsetY: e.clientY - item.y,
         };
+        desktopState.draggedItemId = id;
+        desktopState.pointerY = e.clientY;
         const el = e.currentTarget as HTMLElement;
         el.setPointerCapture(e.pointerId);
     }
@@ -51,6 +53,7 @@ class InteractionManager {
     }
 
     onPointerMove(e: PointerEvent) {
+        desktopState.pointerY = e.clientY;
         if (this.activeDrag) {
             const item = desktopState.items.find((i) => i.id === this.activeDrag!.id);
             if (item) {
@@ -80,6 +83,19 @@ class InteractionManager {
 
     onPointerUp(e: PointerEvent) {
         if (!this.activeDrag && !this.activeResize) return;
+        
+        if (this.activeDrag) {
+            // Check if dropped on a workspace button
+            const element = document.elementFromPoint(e.clientX, e.clientY);
+            const wsButton = element?.closest("[data-workspace-button]");
+            if (wsButton) {
+                const wsId = wsButton.getAttribute("data-workspace-id");
+                if (wsId) {
+                    desktopState.moveItemToWorkspace(this.activeDrag.id, wsId);
+                }
+            }
+        }
+
         try {
             const el = e.target as HTMLElement;
             if (el && el.releasePointerCapture)
@@ -87,6 +103,8 @@ class InteractionManager {
         } catch (err) {}
         this.activeDrag = null;
         this.activeResize = null;
+        desktopState.draggedItemId = null;
+        desktopState.pointerY = 0;
     }
 
     onWindowResize() {

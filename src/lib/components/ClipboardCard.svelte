@@ -5,6 +5,7 @@
     import FileIcon from "@lucide/svelte/icons/file";
     import ScanText from "@lucide/svelte/icons/scan-text";
     import type { ClipboardItem } from "$lib/types";
+    import { desktopState } from "../../routes/desktop-state.svelte";
 
     let {
         item,
@@ -37,7 +38,7 @@
     id="card-{item.id}"
     in:fly={{ y: 20, duration: 400, opacity: 0 }}
     out:fade={{ duration: 200 }}
-    class="absolute group select-none flex flex-col"
+    class="absolute group select-none flex flex-col {desktopState.draggedItemId === item.id ? 'pointer-events-none' : ''}"
     style="left: {item.x}px; top: {item.y}px; z-index: {item.z}; {item.w
         ? `width: ${item.w}px;`
         : item.type === 'text'

@@ -11,6 +11,12 @@
     let editValue = $state("");
     let isHovered = $state(false);
 
+    // Expand when hovered OR when dragging AND near the bottom
+    let isExpanded = $derived(
+        isHovered || 
+        (!!desktopState.draggedItemId && desktopState.pointerY > window.innerHeight - 100)
+    );
+
     let workspaceToDelete = $state<string | null>(null);
     let showDeleteAlert = $state(false);
 
@@ -70,7 +76,7 @@
     <!-- Handle de reposo - Consistente con el estilo de botones -->
     <div
         class="w-42 h-2 rounded-full border border-border/50 bg-background/80 backdrop-blur-md shadow-md transition-all duration-500 hover:bg-muted
-        {isHovered
+        {isExpanded
             ? 'opacity-0 -translate-y-4 scale-x-150'
             : 'opacity-100 translate-y-12'}"
     ></div>
@@ -78,17 +84,20 @@
     <!-- Dock Principal Adaptativo - Consistente con botones de acción -->
     <div
         class="flex items-center gap-2 p-2 rounded-2xl border border-border/50 bg-background/80 backdrop-blur-md shadow-md transition-all duration-500
-        {isHovered
+        {isExpanded
             ? 'translate-y-0 opacity-100 scale-100'
             : 'translate-y-12 opacity-0 scale-90 pointer-events-none'}"
     >
         {#each desktopState.workspaces as ws (ws.id)}
             <div class="relative group flex items-center">
                 <button
+                    data-workspace-id={ws.id}
+                    data-workspace-button
                     class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 min-w-[70px] justify-center relative
                     {desktopState.activeWorkspaceId === ws.id
                         ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'}
+                    {desktopState.draggedItemId ? 'ring-2 ring-primary/20 scale-105' : ''}"
                     onclick={() => (desktopState.activeWorkspaceId = ws.id)}
                     ondblclick={() => startEditing(ws.id, ws.name)}
                 >

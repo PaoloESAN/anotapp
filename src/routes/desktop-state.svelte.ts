@@ -40,6 +40,9 @@ class DesktopState {
     peerId = $state("");
     peerInstance: any = null;
     
+    draggedItemId = $state<string | null>(null);
+    pointerY = $state(0);
+    
     ocrText = $state("");
     ocrLoading = $state(false);
     ocrImageSrc = $state("");
@@ -214,6 +217,37 @@ class DesktopState {
             const rows = Math.ceil(files.length / cols);
             const cardH = Math.min(56 + rows * 110, window.innerHeight - 80);
             this.addItem({ type: "files", content: "", files, w: cardW, h: cardH });
+        }
+    }
+
+    moveItemToWorkspace(itemId: string, targetWorkspaceId: string) {
+        // Find current workspace and item
+        let itemToMove: ClipboardItem | null = null;
+        let sourceWsId = "";
+
+        for (const ws of this.workspaces) {
+            const index = ws.items.findIndex(i => i.id === itemId);
+            if (index !== -1) {
+                itemToMove = ws.items[index];
+                sourceWsId = ws.id;
+                // Don't move to the same workspace
+                if (ws.id === targetWorkspaceId) return;
+                
+                // Remove from source
+                ws.items = ws.items.filter(i => i.id !== itemId);
+                break;
+            }
+        }
+
+        if (itemToMove) {
+            // Add to target workspace
+            const targetWs = this.workspaces.find(ws => ws.id === targetWorkspaceId);
+            if (targetWs) {
+                // Position in the center of the window
+                itemToMove.x = window.innerWidth / 2 - (itemToMove.w || 280) / 2;
+                itemToMove.y = window.innerHeight / 2 - (itemToMove.h || 150) / 2;
+                targetWs.items.push(itemToMove);
+            }
         }
     }
 
