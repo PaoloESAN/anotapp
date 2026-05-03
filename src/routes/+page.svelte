@@ -40,16 +40,22 @@
         await onTextUpdate((text) => {
             if (desktopState.clipboardPaused) return;
             if (!text || text === desktopState.lastText) return;
-            if (desktopState.items.find((i) => i.type === "text" && i.content === text))
+            if (
+                desktopState.items.find(
+                    (i) => i.type === "text" && i.content === text,
+                )
+            )
                 return;
             desktopState.lastText = text;
             desktopState.addItem({ type: "text", content: text });
         });
         await onImageUpdate((b64) => {
-            if (!desktopState.clipboardPaused) desktopState.handleImageUpdate(b64);
+            if (!desktopState.clipboardPaused)
+                desktopState.handleImageUpdate(b64);
         });
         await onFilesUpdate((files) => {
-            if (!desktopState.clipboardPaused) desktopState.handleFilesUpdate(files);
+            if (!desktopState.clipboardPaused)
+                desktopState.handleFilesUpdate(files);
         });
 
         // Initialize PeerJS
@@ -62,11 +68,16 @@
                 desktopState.peerId = id;
             });
 
-            desktopState.peerInstance.on("connection", (conn: DataConnection) => {
-                conn.on("data", (data: any) => {
-                    desktopState.handleIncomingPeerData(data);
-                });
-            });
+            desktopState.peerInstance.on(
+                "connection",
+                (conn: DataConnection) => {
+                    desktopState.isMobileLinkOpen = false;
+
+                    conn.on("data", (data: any) => {
+                        desktopState.handleIncomingPeerData(data);
+                    });
+                },
+            );
         } catch (err) {
             console.error("Failed to initialize PeerJS:", err);
         }
@@ -82,15 +93,21 @@
     async function onCopy(item: ClipboardItem) {
         try {
             if (item.type === "text") {
-                const { writeText } = await import("tauri-plugin-clipboard-api");
+                const { writeText } = await import(
+                    "tauri-plugin-clipboard-api"
+                );
                 await writeText(item.content);
                 desktopState.lastText = item.content;
             } else if (item.type === "image") {
-                const { writeImageBase64 } = await import("tauri-plugin-clipboard-api");
+                const { writeImageBase64 } = await import(
+                    "tauri-plugin-clipboard-api"
+                );
                 const b64 = item.content.replace(/^data:[^;]+;base64,/, "");
                 await writeImageBase64(b64);
             } else if (item.type === "files" && item.files?.length) {
-                const { writeFilesURIs } = await import("tauri-plugin-clipboard-api");
+                const { writeFilesURIs } = await import(
+                    "tauri-plugin-clipboard-api"
+                );
                 await writeFilesURIs(item.files);
             }
         } catch (err) {
@@ -110,7 +127,10 @@
 >
     <CanvasBackground />
 
-    <EmptyState isReady={desktopState.isReady} hasItems={desktopState.items.length > 0} />
+    <EmptyState
+        isReady={desktopState.isReady}
+        hasItems={desktopState.items.length > 0}
+    />
 
     {#each desktopState.items as item (item.id)}
         <ClipboardCard
@@ -120,8 +140,12 @@
                 if (item) item.z = desktopState.maxZ++;
             }}
             onDragStart={(e, id) => interactionManager.onDragStart(e, id)}
-            onResizeStart={(e, id, dir) => interactionManager.onResizeStart(e, id, dir)}
-            onDelete={(id) => (desktopState.items = desktopState.items.filter((i) => i.id !== id))}
+            onResizeStart={(e, id, dir) =>
+                interactionManager.onResizeStart(e, id, dir)}
+            onDelete={(id) =>
+                (desktopState.items = desktopState.items.filter(
+                    (i) => i.id !== id,
+                ))}
             {onCopy}
             {onScanText}
             hideHeaders={desktopState.hideHeaders}
@@ -137,7 +161,10 @@
         bind:bgPattern={desktopState.bgPattern}
     />
 
-    <MobileLinkModal bind:open={desktopState.isMobileLinkOpen} peerId={desktopState.peerId} />
+    <MobileLinkModal
+        bind:open={desktopState.isMobileLinkOpen}
+        peerId={desktopState.peerId}
+    />
 
     <OcrResultModal
         bind:open={desktopState.isOcrModalOpen}
@@ -152,7 +179,10 @@
 
     <PauseButton bind:paused={desktopState.clipboardPaused} />
 
-    <ClearAllAlert count={desktopState.items.length} onClear={() => (desktopState.items = [])} />
+    <ClearAllAlert
+        count={desktopState.items.length}
+        onClear={() => (desktopState.items = [])}
+    />
 </main>
 
 <style>
