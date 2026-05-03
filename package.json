@@ -14,7 +14,7 @@
 	"devDependencies": {
 		"@fontsource-variable/inter": "^5.2.8",
 		"@internationalized/date": "^3.12.1",
-		"@lucide/svelte": "^1.8.0",
+		"@lucide/svelte": "^1.14.0",
 		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.57.0",
@@ -37,6 +37,7 @@
 	},
 	"dependencies": {
 		"@tauri-apps/api": "^2.10.1",
+		"jsqr": "^1.4.0",
 		"mode-watcher": "^1.1.0",
 		"peerjs": "^1.5.5",
 		"qrcode": "^1.5.4",
