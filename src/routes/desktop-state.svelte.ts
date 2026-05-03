@@ -9,7 +9,7 @@ class DesktopState {
     lastImageB64Len = $state(0);
     isReady = $state(false);
     clipboardPaused = $state(false);
-    hideHeaders = $state(false);
+    hideHeaders = $state(true);
     bgPattern = $state("grid");
     customBgImage = $state("");
     
@@ -31,7 +31,7 @@ class DesktopState {
                     this.maxZ = Math.max(0, ...this.items.map((i) => i.z || 0)) + 1;
                 }
                 const savedHeaders = localStorage.getItem("anotapp-hide-headers");
-                if (savedHeaders === "true") this.hideHeaders = true;
+                if (savedHeaders !== null) this.hideHeaders = savedHeaders === "true";
 
                 const savedBg = localStorage.getItem("anotapp-bg-pattern");
                 if (savedBg) this.bgPattern = savedBg;
