@@ -67,17 +67,17 @@
     onmouseenter={() => (isHovered = true)}
     onmouseleave={() => (isHovered = false)}
 >
-    <!-- Handle de reposo -->
+    <!-- Handle de reposo - Consistente con el estilo de botones -->
     <div
-        class="w-42 h-2.5 rounded-full border border-primary/40 bg-background/60 backdrop-blur-md transition-all duration-500 hover:bg-primary/30
+        class="w-42 h-2 rounded-full border border-border/50 bg-background/80 backdrop-blur-md shadow-md transition-all duration-500 hover:bg-muted
         {isHovered
             ? 'opacity-0 -translate-y-4 scale-x-150'
             : 'opacity-100 translate-y-12'}"
     ></div>
 
-    <!-- Dock Principal alineado con botones laterales -->
+    <!-- Dock Principal Adaptativo - Consistente con botones de acción -->
     <div
-        class="flex items-center gap-2 p-2 rounded-2xl border border-white/10 bg-[#0d0d0d]/95 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500
+        class="flex items-center gap-2 p-2 rounded-2xl border border-border/50 bg-background/80 backdrop-blur-md shadow-md transition-all duration-500
         {isHovered
             ? 'translate-y-0 opacity-100 scale-100'
             : 'translate-y-12 opacity-0 scale-90 pointer-events-none'}"
@@ -87,8 +87,8 @@
                 <button
                     class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 min-w-[70px] justify-center relative
                     {desktopState.activeWorkspaceId === ws.id
-                        ? 'bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)]'
-                        : 'text-zinc-500 hover:bg-white/5 hover:text-zinc-300'}"
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
                     onclick={() => (desktopState.activeWorkspaceId = ws.id)}
                     ondblclick={() => startEditing(ws.id, ws.name)}
                 >
@@ -116,7 +116,7 @@
 
                 {#if desktopState.workspaces.length > 1 && editingId !== ws.id}
                     <button
-                        class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-900 border border-white/10 text-zinc-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:text-white shadow-xl z-20"
+                        class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-background border border-border text-muted-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-destructive-foreground shadow-xl z-20"
                         onclick={(e) => {
                             e.stopPropagation();
                             requestDelete(ws.id);
@@ -128,10 +128,10 @@
             </div>
         {/each}
 
-        <div class="w-px h-6 bg-white/10 mx-1"></div>
+        <div class="w-px h-6 bg-border/50 mx-1"></div>
 
         <button
-            class="w-10 h-10 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-white/5 hover:text-white transition-all active:scale-90"
+            class="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all active:scale-90"
             onclick={() => desktopState.addWorkspace()}
             title="Nueva Mesa"
         >
@@ -143,27 +143,27 @@
 <!-- Modal de confirmación -->
 <AlertDialog.Root bind:open={showDeleteAlert}>
     <AlertDialog.Content
-        class="bg-[#0d0d0d] border-white/10 rounded-3xl shadow-2xl"
+        class="bg-background border-border rounded-3xl shadow-2xl"
     >
         <AlertDialog.Header>
             <AlertDialog.Title
-                class="text-white flex items-center gap-2 text-xl"
+                class="text-foreground flex items-center gap-2 text-xl"
             >
-                <AlertCircle class="w-6 h-6 text-red-500" />
+                <AlertCircle class="w-6 h-6 text-destructive" />
                 ¿Eliminar mesa de trabajo?
             </AlertDialog.Title>
-            <AlertDialog.Description class="text-zinc-400 text-base">
+            <AlertDialog.Description class="text-muted-foreground text-base">
                 Esta mesa contiene notas. Si la eliminas, todo el contenido se
                 borrará permanentemente.
             </AlertDialog.Description>
         </AlertDialog.Header>
         <AlertDialog.Footer class="gap-3">
             <AlertDialog.Cancel
-                class="bg-transparent border-white/10 text-zinc-300 hover:bg-white/5 rounded-xl h-12 px-6"
+                class="bg-transparent border-border text-muted-foreground hover:bg-muted rounded-xl h-12 px-6"
                 >Cancelar</AlertDialog.Cancel
             >
             <AlertDialog.Action
-                class="bg-red-600 hover:bg-red-700 text-white border-none rounded-xl h-12 px-6 font-bold"
+                class="bg-destructive hover:bg-destructive/90 text-destructive-foreground border-none rounded-xl h-12 px-6 font-bold"
                 onclick={confirmDelete}
             >
                 Eliminar mesa
