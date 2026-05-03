@@ -36,6 +36,7 @@
         };
         reader.readAsDataURL(file);
     }
+    let isMenuOpen = $state(false);
 </script>
 
 <input
@@ -56,12 +57,15 @@
         <Smartphone class="w-5 h-5" />
     </button>
 
-    <DropdownMenu.Root>
+    <DropdownMenu.Root bind:open={isMenuOpen}>
         <DropdownMenu.Trigger>
             {#snippet child({ props })}
                 <button
                     {...props}
-                    class="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-background/80 backdrop-blur-md text-primary shadow-xl transition-all hover:bg-primary/10 hover:border-primary/50 hover:text-primary/80 hover:scale-105 active:scale-95"
+                    class="flex h-12 w-12 items-center justify-center rounded-full border transition-all shadow-xl
+                    {isMenuOpen
+                        ? 'bg-primary/20 border-primary/60 scale-105 text-primary backdrop-blur-md'
+                        : 'border-primary/30 bg-background/80 backdrop-blur-md text-primary hover:bg-primary/10 hover:border-primary/50 hover:text-primary/80 hover:scale-105 active:scale-95'}"
                     title="Agregar contenido"
                 >
                     <Plus class="w-6 h-6" />
