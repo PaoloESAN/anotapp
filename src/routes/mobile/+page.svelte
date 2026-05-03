@@ -26,7 +26,7 @@
     } from "$lib/components/ui/card";
 
     let peerId = $state("");
-    let status = $state<"idle" | "connecting" | "connected" | "error">("idle");
+    let status = $state<"idle" | "connecting" | "connected" | "error" | "reconnecting">("idle");
     let peerInstance: any = null;
     let connection: DataConnection | null = $state(null);
     let textInput = $state("");
@@ -38,9 +38,52 @@
     let canvasElement: HTMLCanvasElement | null = $state(null);
     let scanStream: MediaStream | null = $state(null);
 
+    function handleVisibilityChange() {
+        if (document.visibilityState === "visible" && peerId) {
+            if (status === "error") {
+                initConnection(peerId, false);
+            } else if (
+                (status === "connected" || status === "reconnecting") &&
+                connection &&
+                !connection.open
+            ) {
+                initConnection(peerId, true);
+            }
+        }
+    }
+
+    $effect(() => {
+        if (typeof sessionStorage !== "undefined") {
+            sessionStorage.setItem("anotapp_textInput", textInput);
+        }
+    });
+
+    function savePeerId(id: string) {
+        if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            url.searchParams.set("peerId", id);
+            window.history.replaceState({}, "", url);
+            sessionStorage.setItem("anotapp_peerId", id);
+        }
+    }
+
     onMount(async () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const urlPeerId = urlParams.get("peerId") || "";
+        let urlPeerId = urlParams.get("peerId") || "";
+
+        if (!urlPeerId && typeof sessionStorage !== "undefined") {
+            urlPeerId = sessionStorage.getItem("anotapp_peerId") || "";
+            if (urlPeerId) {
+                const url = new URL(window.location.href);
+                url.searchParams.set("peerId", urlPeerId);
+                window.history.replaceState({}, "", url);
+            }
+        }
+
+        if (typeof sessionStorage !== "undefined") {
+            const savedText = sessionStorage.getItem("anotapp_textInput");
+            if (savedText) textInput = savedText;
+        }
 
         if (urlPeerId) {
             peerId = urlPeerId;
@@ -48,16 +91,24 @@
         } else {
             status = "idle";
         }
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
     });
 
     onDestroy(() => {
         stopScanner();
         if (peerInstance) peerInstance.destroy();
+        if (typeof document !== "undefined") {
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange,
+            );
+        }
     });
 
-    async function initConnection(id: string) {
+    async function initConnection(id: string, isAutoReconnect = false) {
         if (!id) return;
-        status = "connecting";
+        status = isAutoReconnect ? "reconnecting" : "connecting";
 
         try {
             const { Peer } = await import("peerjs");
@@ -77,17 +128,30 @@
 
                 conn.on("error", (err: any) => {
                     console.error("Connection error:", err);
-                    status = "error";
+                    if (status === "connected" || status === "reconnecting") {
+                        setTimeout(() => initConnection(id, true), 3000);
+                    } else {
+                        status = "error";
+                    }
                 });
 
                 conn.on("close", () => {
-                    status = "error";
+                    if (status === "connected" || status === "reconnecting") {
+                        status = "reconnecting";
+                        setTimeout(() => initConnection(id, true), 3000);
+                    } else {
+                        status = "error";
+                    }
                 });
             });
 
             peerInstance.on("error", (err: any) => {
                 console.error("Peer error:", err);
-                status = "error";
+                if (status === "connected" || status === "reconnecting") {
+                    setTimeout(() => initConnection(id, true), 3000);
+                } else {
+                    status = "error";
+                }
             });
         } catch (err) {
             console.error("Failed to load PeerJS:", err);
@@ -99,6 +163,7 @@
         if (e) e.preventDefault();
         if (!inputCode.trim()) return;
         peerId = inputCode.trim();
+        savePeerId(peerId);
         initConnection(peerId);
     }
 
@@ -207,6 +272,7 @@
             const scannedPeerId = urlObj.searchParams.get("peerId");
             if (scannedPeerId) {
                 peerId = scannedPeerId;
+                savePeerId(peerId);
                 initConnection(peerId);
             } else {
                 alert("QR inválido: No se encontró el ID de conexión.");
@@ -214,6 +280,7 @@
         } catch (e) {
             if (url && url.length > 0) {
                 peerId = url;
+                savePeerId(peerId);
                 initConnection(peerId);
             }
         }
@@ -236,17 +303,38 @@
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
                     {#snippet child({ props })}
-                        <Button {...props} variant="ghost" size="icon" class="rounded-full text-muted-foreground hover:text-foreground">
-                            <Sun class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                            <Moon class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <Button
+                            {...props}
+                            variant="ghost"
+                            size="icon"
+                            class="rounded-full text-muted-foreground hover:text-foreground"
+                        >
+                            <Sun
+                                class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                            />
+                            <Moon
+                                class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                            />
                             <span class="sr-only">Cambiar tema</span>
                         </Button>
                     {/snippet}
                 </DropdownMenu.Trigger>
-                <DropdownMenu.Content align="end" class="border-border/50 shadow-lg rounded-xl min-w-[120px]">
-                    <DropdownMenu.Item onclick={() => setMode("light")} class="cursor-pointer py-2">Claro</DropdownMenu.Item>
-                    <DropdownMenu.Item onclick={() => setMode("dark")} class="cursor-pointer py-2">Oscuro</DropdownMenu.Item>
-                    <DropdownMenu.Item onclick={() => resetMode()} class="cursor-pointer py-2">Sistema</DropdownMenu.Item>
+                <DropdownMenu.Content
+                    align="end"
+                    class="border-border/50 shadow-lg rounded-xl min-w-[120px]"
+                >
+                    <DropdownMenu.Item
+                        onclick={() => setMode("light")}
+                        class="cursor-pointer py-2">Claro</DropdownMenu.Item
+                    >
+                    <DropdownMenu.Item
+                        onclick={() => setMode("dark")}
+                        class="cursor-pointer py-2">Oscuro</DropdownMenu.Item
+                    >
+                    <DropdownMenu.Item
+                        onclick={() => resetMode()}
+                        class="cursor-pointer py-2">Sistema</DropdownMenu.Item
+                    >
                 </DropdownMenu.Content>
             </DropdownMenu.Root>
         </div>
@@ -260,6 +348,13 @@
             >
                 <CheckCircle2 class="w-3.5 h-3.5" />
                 Conectado a la PC
+            </div>
+        {:else if status === "reconnecting"}
+            <div
+                class="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full text-xs font-semibold animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300"
+            >
+                <Loader2 class="w-3.5 h-3.5 animate-spin" />
+                Reconectando...
             </div>
         {/if}
     </header>
@@ -394,7 +489,7 @@
                                 type="text"
                                 placeholder="Ej: an-123456"
                                 bind:value={inputCode}
-                                class="text-center text-lg tracking-wider font-mono uppercase h-12"
+                                class="text-center text-lg tracking-wider font-mono h-12 focus-visible:ring-zinc-300 dark:focus-visible:ring-[#555555] focus-visible:ring-offset-0 outline-none"
                             />
                         </div>
                         <Button
@@ -408,7 +503,7 @@
                     </form>
                 </CardContent>
             </Card>
-        {:else if status === "connected"}
+        {:else if status === "connected" || status === "reconnecting"}
             <!-- Connected View (ChatGPT style input) -->
             <div
                 class="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full"
