@@ -2,7 +2,7 @@
     import Plus from "@lucide/svelte/icons/plus";
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import Smartphone from "@lucide/svelte/icons/smartphone";
-    import SettingsModal from "./SettingsModal.svelte";
+    import SettingsModal from "./modals/SettingsModal.svelte";
 
     let {
         addEmptyText,

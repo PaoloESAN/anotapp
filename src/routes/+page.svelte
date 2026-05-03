@@ -13,422 +13,84 @@
     import ActionButtons from "$lib/components/ActionButtons.svelte";
     import PauseButton from "$lib/components/PauseButton.svelte";
     import Titlebar from "$lib/components/Titlebar.svelte";
-    import MobileLinkModal from "$lib/components/MobileLinkModal.svelte";
-    import OcrResultModal from "$lib/components/OcrResultModal.svelte";
+    import MobileLinkModal from "$lib/components/modals/MobileLinkModal.svelte";
+    import OcrResultModal from "$lib/components/modals/OcrResultModal.svelte";
+    import CanvasBackground from "$lib/components/CanvasBackground.svelte";
     import type { DataConnection } from "peerjs";
-    import { createWorker } from "tesseract.js";
+    import { desktopState } from "./desktop-state.svelte";
+    import { interactionManager } from "./interaction-manager.svelte";
 
-    let _initialItems: ClipboardItem[] = [];
-    let _initialZ = 1;
-    let _initialHideHeaders = false;
-    let _initialBgPattern = "grid";
-    if (typeof localStorage !== "undefined") {
-        try {
-            const saved = localStorage.getItem("anotapp-items");
-            if (saved) {
-                _initialItems = JSON.parse(saved);
-                _initialZ =
-                    Math.max(0, ..._initialItems.map((i) => i.z || 0)) + 1;
-            }
-            const savedHeaders = localStorage.getItem("anotapp-hide-headers");
-            if (savedHeaders === "true") _initialHideHeaders = true;
+    desktopState.initSerialization();
 
-            const savedBg = localStorage.getItem("anotapp-bg-pattern");
-            if (savedBg) _initialBgPattern = savedBg;
-        } catch (e) {}
-    }
-
-    let items = $state<ClipboardItem[]>(_initialItems);
-    let maxZ = $state(_initialZ);
     let stopListening: (() => Promise<void>) | null = null;
-    let lastText = $state("");
-    let lastImageB64Len = $state(0);
-    let isReady = $state(false);
-    let isAlertOpen = $state(false);
-    let clipboardPaused = $state(false);
-
-    let hideHeaders = $state(_initialHideHeaders);
-    let bgPattern = $state(_initialBgPattern);
-    let customBgImage = $state("");
-
-    let isMobileLinkOpen = $state(false);
-    let peerId = $state("");
-    let peerInstance: any = null;
-
-    let isOcrModalOpen = $state(false);
-    let ocrText = $state("");
-    let ocrLoading = $state(false);
-    let ocrImageSrc = $state("");
 
     function onScanText(item: ClipboardItem) {
         if (item.type !== "image" || !item.content) return;
-
-        ocrImageSrc = item.content;
-        ocrText = "";
-        isOcrModalOpen = true;
-    }
-
-    async function handleExtractText(rect?: {
-        top: number;
-        left: number;
-        width: number;
-        height: number;
-    }) {
-        if (!ocrImageSrc) return;
-
-        ocrLoading = true;
-        ocrText = "";
-
-        try {
-            const worker = await createWorker("eng+spa");
-
-            let recognizeOptions = undefined;
-            if (rect) {
-                // Tesseract.js rectangle format: { top, left, width, height }
-                recognizeOptions = { rectangle: rect };
-            }
-
-            const {
-                data: { text },
-            } = await worker.recognize(ocrImageSrc, recognizeOptions);
-            await worker.terminate();
-            ocrText = text;
-        } catch (e: any) {
-            console.error("OCR Error:", e);
-            ocrText = "Ocurrió un error al extraer el texto: " + e;
-        } finally {
-            ocrLoading = false;
-        }
-    }
-
-    $effect(() => {
-        // Deeply track items via JSON serialization
-        const serialized = JSON.stringify(items);
-        const hideState = hideHeaders;
-        const bgState = bgPattern;
-
-        // Debounce storage writes to prevent IO blocking during drag/resize (60fps)
-        const timer = setTimeout(() => {
-            try {
-                localStorage.setItem("anotapp-items", serialized);
-                localStorage.setItem("anotapp-hide-headers", String(hideState));
-                localStorage.setItem("anotapp-bg-pattern", bgState);
-            } catch (err) {
-                console.warn("Storage exception, possibly exceeded quota", err);
-            }
-        }, 500);
-
-        return () => clearTimeout(timer);
-    });
-
-    async function handleImageUpdate(b64: string) {
-        try {
-            if (!b64 || b64.length === lastImageB64Len) return;
-            lastImageB64Len = b64.length;
-
-            const dataUrl = `data:image/png;base64,${b64}`;
-            if (items.find((i) => i.type === "image" && i.content === dataUrl))
-                return;
-
-            const img = new Image();
-            await new Promise<void>((res) => {
-                img.onload = () => res();
-                img.src = dataUrl;
-            });
-            const iw = img.naturalWidth;
-            const ih = img.naturalHeight;
-
-            let targetW = iw + 16;
-            let targetH = ih + 56;
-            if (targetW > 350) {
-                targetH = (350 / targetW) * targetH;
-                targetW = 350;
-            }
-            if (targetH > 400) {
-                targetW = (400 / targetH) * targetW;
-                targetH = 400;
-            }
-
-            addItem({
-                type: "image",
-                content: dataUrl,
-                w: targetW,
-                h: targetH,
-            });
-        } catch (err) {}
-    }
-
-    async function handleIncomingPeerData(data: any) {
-        if (!data || !data.type) return;
-        if (data.type === "text" && data.content) {
-            if (
-                items.find(
-                    (i) => i.type === "text" && i.content === data.content,
-                )
-            )
-                return;
-            addItem({ type: "text", content: data.content });
-        } else if (data.type === "image" && data.content) {
-            // content could be base64
-            let b64 = data.content;
-            if (b64.startsWith("data:image")) {
-                b64 = b64.split(",")[1];
-            }
-            await handleImageUpdate(b64);
-        }
-    }
-
-    function handleFilesUpdate(files: string[]) {
-        if (!files || files.length === 0) return;
-        // Deduplicate by comparing sorted paths as a fingerprint
-        const key = [...files].sort().join("|");
-        if (
-            items.find(
-                (i) =>
-                    i.type === "files" &&
-                    [...(i.files ?? [])].sort().join("|") === key,
-            )
-        )
-            return;
-
-        if (files.length === 1) {
-            // Single file: compact square card
-            addItem({ type: "files", content: "", files, w: 200, h: 200 });
-        } else {
-            // Multiple files: expand to fill window width
-            const cardW = Math.min(window.innerWidth - 48, 900);
-            const cols = Math.max(1, Math.floor(cardW / 110));
-            const rows = Math.ceil(files.length / cols);
-            const cardH = Math.min(56 + rows * 110, window.innerHeight - 80);
-            addItem({ type: "files", content: "", files, w: cardW, h: cardH });
-        }
-    }
-
-    function addItem({
-        type,
-        content,
-        files,
-        w,
-        h,
-    }: {
-        type: "text" | "image" | "files";
-        content: string;
-        files?: string[];
-        w?: number;
-        h?: number;
-    }) {
-        items.push({
-            id: crypto.randomUUID(),
-            type,
-            content,
-            files,
-            x: window.innerWidth / 2 - 150 + (Math.random() * 100 - 50),
-            y: window.innerHeight / 2 - 150 + (Math.random() * 100 - 50),
-            z: maxZ++,
-            w,
-            h,
-        });
-    }
-
-    function addEmptyText() {
-        items.push({
-            id: crypto.randomUUID(),
-            type: "text",
-            content: "",
-            x: window.innerWidth / 2 - 140 + (Math.random() * 40 - 20),
-            y: window.innerHeight / 2 - 75 + (Math.random() * 40 - 20),
-            z: maxZ++,
-            w: 280,
-            h: 150,
-            editing: false,
-        });
+        desktopState.ocrImageSrc = item.content;
+        desktopState.ocrText = "";
+        desktopState.isOcrModalOpen = true;
     }
 
     onMount(async () => {
-        try {
-            const savedImg = localStorage.getItem("anotapp-custom-bg-image");
-            if (savedImg) customBgImage = savedImg;
-        } catch (e) {}
-
         window.addEventListener("anotapp-bg-updated", ((e: CustomEvent) => {
-            customBgImage = e.detail;
+            desktopState.customBgImage = e.detail;
         }) as EventListener);
 
-        // Start the native OS clipboard monitor and subscribe to events
         stopListening = await startListening();
         await onTextUpdate((text) => {
-            if (clipboardPaused) return;
-            if (!text || text === lastText) return;
-            if (items.find((i) => i.type === "text" && i.content === text))
+            if (desktopState.clipboardPaused) return;
+            if (!text || text === desktopState.lastText) return;
+            if (desktopState.items.find((i) => i.type === "text" && i.content === text))
                 return;
-            lastText = text;
-            addItem({ type: "text", content: text });
+            desktopState.lastText = text;
+            desktopState.addItem({ type: "text", content: text });
         });
         await onImageUpdate((b64) => {
-            if (!clipboardPaused) handleImageUpdate(b64);
+            if (!desktopState.clipboardPaused) desktopState.handleImageUpdate(b64);
         });
         await onFilesUpdate((files) => {
-            if (!clipboardPaused) handleFilesUpdate(files);
+            if (!desktopState.clipboardPaused) desktopState.handleFilesUpdate(files);
         });
 
-        // Initialize PeerJS for WebRTC Mobile Link
+        // Initialize PeerJS
         try {
             const { Peer } = await import("peerjs");
             const id = crypto.randomUUID();
-            peerInstance = new Peer(id);
+            desktopState.peerInstance = new Peer(id);
 
-            peerInstance.on("open", (id: string) => {
-                peerId = id;
+            desktopState.peerInstance.on("open", (id: string) => {
+                desktopState.peerId = id;
             });
 
-            peerInstance.on("connection", (conn: DataConnection) => {
+            desktopState.peerInstance.on("connection", (conn: DataConnection) => {
                 conn.on("data", (data: any) => {
-                    handleIncomingPeerData(data);
+                    desktopState.handleIncomingPeerData(data);
                 });
             });
         } catch (err) {
             console.error("Failed to initialize PeerJS:", err);
         }
 
-        setTimeout(() => (isReady = true), 300);
+        setTimeout(() => (desktopState.isReady = true), 300);
     });
 
     onDestroy(async () => {
         if (stopListening) await stopListening();
-        if (peerInstance) peerInstance.destroy();
+        if (desktopState.peerInstance) desktopState.peerInstance.destroy();
     });
-
-    let activeDrag: { id: string; offsetX: number; offsetY: number } | null =
-        $state(null);
-    let activeResize: {
-        id: string;
-        startW: number;
-        startH: number;
-        startX: number;
-        startY: number;
-        startItemX: number;
-        dir: "se" | "sw";
-    } | null = $state(null);
-
-    function onDragStart(e: PointerEvent, id: string) {
-        const item = items.find((i) => i.id === id);
-        if (!item) return;
-        item.z = maxZ++;
-        activeDrag = {
-            id,
-            offsetX: e.clientX - item.x,
-            offsetY: e.clientY - item.y,
-        };
-        const el = e.currentTarget as HTMLElement;
-        el.setPointerCapture(e.pointerId);
-    }
-
-    function onResizeStart(
-        e: PointerEvent,
-        id: string,
-        dir: "se" | "sw" = "se",
-    ) {
-        e.stopPropagation();
-        e.preventDefault();
-        const item = items.find((i) => i.id === id);
-        if (!item) return;
-        item.z = maxZ++;
-        const el = document.getElementById(`card-${item.id}`);
-        const rect = el?.getBoundingClientRect();
-        activeResize = {
-            id: item.id,
-            startW: rect ? rect.width : item.w || 280,
-            startH: rect ? rect.height : item.h || 150,
-            startX: e.clientX,
-            startY: e.clientY,
-            startItemX: item.x,
-            dir,
-        };
-        const handle = e.currentTarget as HTMLElement;
-        handle.setPointerCapture(e.pointerId);
-    }
-
-    function onPointerMove(e: PointerEvent) {
-        if (activeDrag) {
-            const item = items.find((i) => i.id === activeDrag!.id);
-            if (item) {
-                item.x = e.clientX - activeDrag.offsetX;
-                item.y = e.clientY - activeDrag.offsetY;
-            }
-        } else if (activeResize) {
-            const item = items.find((i) => i.id === activeResize!.id);
-            if (item) {
-                const deltaX = e.clientX - activeResize!.startX;
-                const deltaY = e.clientY - activeResize!.startY;
-                const minW = 80;
-
-                if (activeResize!.dir === "se") {
-                    item.w = Math.max(minW, activeResize!.startW + deltaX);
-                } else if (activeResize!.dir === "sw") {
-                    const maxPossibleDelta = activeResize!.startW - minW;
-                    const safeDeltaX = Math.min(deltaX, maxPossibleDelta);
-                    item.w = activeResize!.startW - safeDeltaX;
-                    item.x = activeResize!.startItemX + safeDeltaX;
-                }
-
-                item.h = Math.max(60, activeResize!.startH + deltaY);
-            }
-        }
-    }
-
-    function onPointerUp(e: PointerEvent) {
-        if (!activeDrag && !activeResize) return;
-        try {
-            const el = e.target as HTMLElement;
-            if (el && el.releasePointerCapture)
-                el.releasePointerCapture(e.pointerId);
-        } catch (err) {}
-        activeDrag = null;
-        activeResize = null;
-    }
-
-    function onWindowResize() {
-        const padding = 20;
-        items.forEach((item) => {
-            const el = document.getElementById(`card-${item.id}`);
-            const w = item.w || el?.getBoundingClientRect().width || 280;
-            const h = item.h || el?.getBoundingClientRect().height || 150;
-            if (item.x + w > window.innerWidth - padding)
-                item.x = Math.max(padding, window.innerWidth - w - padding);
-            if (item.y + h > window.innerHeight - padding)
-                item.y = Math.max(padding, window.innerHeight - h - padding);
-            if (item.x < padding) item.x = padding;
-            if (item.y < padding) item.y = padding;
-        });
-    }
-
-    function onDelete(id: string) {
-        items = items.filter((i) => i.id !== id);
-    }
-
-    function onBringToFront(id: string) {
-        const item = items.find((i) => i.id === id);
-        if (item) item.z = maxZ++;
-    }
 
     async function onCopy(item: ClipboardItem) {
         try {
             if (item.type === "text") {
-                const { writeText } = await import(
-                    "tauri-plugin-clipboard-api"
-                );
+                const { writeText } = await import("tauri-plugin-clipboard-api");
                 await writeText(item.content);
-                lastText = item.content;
+                desktopState.lastText = item.content;
             } else if (item.type === "image") {
-                const { writeImageBase64 } = await import(
-                    "tauri-plugin-clipboard-api"
-                );
+                const { writeImageBase64 } = await import("tauri-plugin-clipboard-api");
                 const b64 = item.content.replace(/^data:[^;]+;base64,/, "");
                 await writeImageBase64(b64);
             } else if (item.type === "files" && item.files?.length) {
-                const { writeFilesURIs } = await import(
-                    "tauri-plugin-clipboard-api"
-                );
+                const { writeFilesURIs } = await import("tauri-plugin-clipboard-api");
                 await writeFilesURIs(item.files);
             }
         } catch (err) {
@@ -438,94 +100,62 @@
 </script>
 
 <svelte:window
-    onpointermove={onPointerMove}
-    onpointerup={onPointerUp}
-    onresize={onWindowResize}
+    onpointermove={(e) => interactionManager.onPointerMove(e)}
+    onpointerup={(e) => interactionManager.onPointerUp(e)}
+    onresize={() => interactionManager.onWindowResize()}
 />
 
 <main
     class="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 relative font-sans isolate selection:bg-primary/30 transition-colors duration-500"
 >
-    <div
-        class="absolute inset-0 pointer-events-none -z-10 pattern-{bgPattern} transition-all duration-700"
-        aria-hidden="true"
-    ></div>
+    <CanvasBackground />
 
-    {#if bgPattern === "custom-image" && customBgImage}
-        <div
-            class="absolute inset-0 pointer-events-none -z-20 bg-cover bg-center transition-all duration-700"
-            style="background-image: url('{customBgImage}')"
-        ></div>
-    {/if}
-    <div
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 opacity-50 blur-[120px] rounded-full pointer-events-none -z-10"
-    ></div>
+    <EmptyState isReady={desktopState.isReady} hasItems={desktopState.items.length > 0} />
 
-    <EmptyState {isReady} hasItems={items.length > 0} />
-
-    {#each items as item (item.id)}
+    {#each desktopState.items as item (item.id)}
         <ClipboardCard
             {item}
-            {onBringToFront}
-            {onDragStart}
-            {onResizeStart}
-            {onDelete}
+            onBringToFront={(id) => {
+                const item = desktopState.items.find((i) => i.id === id);
+                if (item) item.z = desktopState.maxZ++;
+            }}
+            onDragStart={(e, id) => interactionManager.onDragStart(e, id)}
+            onResizeStart={(e, id, dir) => interactionManager.onResizeStart(e, id, dir)}
+            onDelete={(id) => (desktopState.items = desktopState.items.filter((i) => i.id !== id))}
             {onCopy}
             {onScanText}
-            {hideHeaders}
+            hideHeaders={desktopState.hideHeaders}
         />
     {/each}
 
     <Titlebar />
 
     <ActionButtons
-        {addEmptyText}
-        openMobileLink={() => (isMobileLinkOpen = true)}
-        bind:hideHeaders
-        bind:bgPattern
+        addEmptyText={() => desktopState.addEmptyText()}
+        openMobileLink={() => (desktopState.isMobileLinkOpen = true)}
+        bind:hideHeaders={desktopState.hideHeaders}
+        bind:bgPattern={desktopState.bgPattern}
     />
 
-    <MobileLinkModal bind:open={isMobileLinkOpen} {peerId} />
+    <MobileLinkModal bind:open={desktopState.isMobileLinkOpen} peerId={desktopState.peerId} />
 
     <OcrResultModal
-        bind:open={isOcrModalOpen}
-        bind:text={ocrText}
-        imageSrc={ocrImageSrc}
-        isLoading={ocrLoading}
-        onExtract={handleExtractText}
+        bind:open={desktopState.isOcrModalOpen}
+        bind:text={desktopState.ocrText}
+        imageSrc={desktopState.ocrImageSrc}
+        isLoading={desktopState.ocrLoading}
+        onExtract={(rect) => desktopState.handleExtractText(rect)}
         onPinToCanvas={(text) => {
-            addItem({ type: "text", content: text });
+            desktopState.addItem({ type: "text", content: text });
         }}
     />
 
-    <PauseButton bind:paused={clipboardPaused} />
+    <PauseButton bind:paused={desktopState.clipboardPaused} />
 
-    <ClearAllAlert count={items.length} onClear={() => (items = [])} />
+    <ClearAllAlert count={desktopState.items.length} onClear={() => (desktopState.items = [])} />
 </main>
 
 <style>
-    :global(.pattern-grid) {
-        background-image: linear-gradient(
-                to right,
-                #80808012 1px,
-                transparent 1px
-            ),
-            linear-gradient(to bottom, #80808012 1px, transparent 1px);
-        background-size: 24px 24px;
-    }
-    :global(.pattern-dots) {
-        background-image: radial-gradient(#80808040 1.5px, transparent 1.5px);
-        background-size: 24px 24px;
-    }
-    :global(.pattern-cross) {
-        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l24 24M24 0L0 24' stroke='%23808080' stroke-width='1' fill='none' stroke-opacity='0.15'/%3E%3C/svg%3E");
-    }
-    :global(.pattern-waves) {
-        background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20c5 0 10-5 20-5s15 5 20 5' stroke='%23808080' stroke-width='1.5' fill='none' stroke-opacity='0.15'/%3E%3Cpath d='M0 40c5 0 10-5 20-5s15 5 20 5' stroke='%23808080' stroke-width='1.5' fill='none' stroke-opacity='0.15'/%3E%3C/svg%3E");
-    }
-    :global(.pattern-none) {
-        background-image: none;
-    }
     :global(body) {
         margin: 0;
         padding: 0;
