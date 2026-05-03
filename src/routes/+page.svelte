@@ -16,6 +16,7 @@
     import MobileLinkModal from "$lib/components/modals/MobileLinkModal.svelte";
     import OcrResultModal from "$lib/components/modals/OcrResultModal.svelte";
     import CanvasBackground from "$lib/components/CanvasBackground.svelte";
+    import WorkspacesBar from "$lib/components/WorkspacesBar.svelte";
     import type { DataConnection } from "peerjs";
     import { desktopState } from "./desktop-state.svelte";
     import { interactionManager } from "./interaction-manager.svelte";
@@ -178,6 +179,8 @@
     />
 
     <PauseButton bind:paused={desktopState.clipboardPaused} />
+
+    <WorkspacesBar />
 
     <ClearAllAlert
         count={desktopState.items.length}

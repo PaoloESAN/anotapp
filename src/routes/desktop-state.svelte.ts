@@ -2,8 +2,32 @@ import { type ClipboardItem } from "$lib/types";
 import { createWorker } from "tesseract.js";
 import type { DataConnection } from "peerjs";
 
+export interface Workspace {
+    id: string;
+    name: string;
+    items: ClipboardItem[];
+}
+
 class DesktopState {
-    items = $state<ClipboardItem[]>([]);
+    workspaces = $state<Workspace[]>([
+        { id: "ws-default", name: "Mesa 1", items: [] }
+    ]);
+    activeWorkspaceId = $state("ws-default");
+    
+    // Getters for convenience
+    get activeWorkspace() {
+        return this.workspaces.find(ws => ws.id === this.activeWorkspaceId) || this.workspaces[0];
+    }
+
+    get items() {
+        return this.activeWorkspace.items;
+    }
+
+    set items(newItems: ClipboardItem[]) {
+        const ws = this.workspaces.find(ws => ws.id === this.activeWorkspaceId);
+        if (ws) ws.items = newItems;
+    }
+
     maxZ = $state(1);
     lastText = $state("");
     lastImageB64Len = $state(0);
@@ -25,11 +49,24 @@ class DesktopState {
     constructor() {
         if (typeof localStorage !== "undefined") {
             try {
-                const saved = localStorage.getItem("anotapp-items");
-                if (saved) {
-                    this.items = JSON.parse(saved);
-                    this.maxZ = Math.max(0, ...this.items.map((i) => i.z || 0)) + 1;
+                const savedWS = localStorage.getItem("anotapp-workspaces");
+                if (savedWS) {
+                    this.workspaces = JSON.parse(savedWS);
+                    // Calculate maxZ across all workspaces
+                    let currentMaxZ = 1;
+                    this.workspaces.forEach(ws => {
+                        ws.items.forEach(item => {
+                            if (item.z && item.z >= currentMaxZ) currentMaxZ = item.z + 1;
+                        });
+                    });
+                    this.maxZ = currentMaxZ;
                 }
+
+                const savedActiveWS = localStorage.getItem("anotapp-active-ws");
+                if (savedActiveWS && this.workspaces.find(ws => ws.id === savedActiveWS)) {
+                    this.activeWorkspaceId = savedActiveWS;
+                }
+
                 const savedHeaders = localStorage.getItem("anotapp-hide-headers");
                 if (savedHeaders !== null) this.hideHeaders = savedHeaders === "true";
 
@@ -38,20 +75,23 @@ class DesktopState {
                 
                 const savedCustomBg = localStorage.getItem("anotapp-custom-bg-image");
                 if (savedCustomBg) this.customBgImage = savedCustomBg;
-            } catch (e) {}
+            } catch (e) {
+                console.error("Load error:", e);
+            }
         }
     }
 
     initSerialization() {
-        // Auto-save logic - must be called within a component context
         $effect(() => {
-            const serialized = JSON.stringify(this.items);
+            const serializedWS = JSON.stringify(this.workspaces);
+            const activeWS = this.activeWorkspaceId;
             const hideState = this.hideHeaders;
             const bgState = this.bgPattern;
 
             const timer = setTimeout(() => {
                 try {
-                    localStorage.setItem("anotapp-items", serialized);
+                    localStorage.setItem("anotapp-workspaces", serializedWS);
+                    localStorage.setItem("anotapp-active-ws", activeWS);
                     localStorage.setItem("anotapp-hide-headers", String(hideState));
                     localStorage.setItem("anotapp-bg-pattern", bgState);
                 } catch (err) {
@@ -61,6 +101,26 @@ class DesktopState {
 
             return () => clearTimeout(timer);
         });
+    }
+
+    addWorkspace() {
+        const id = crypto.randomUUID();
+        const count = this.workspaces.length + 1;
+        this.workspaces.push({
+            id,
+            name: `Mesa ${count}`,
+            items: []
+        });
+        this.activeWorkspaceId = id;
+    }
+
+    removeWorkspace(id: string) {
+        if (this.workspaces.length <= 1) return;
+        const index = this.workspaces.findIndex(ws => ws.id === id);
+        this.workspaces = this.workspaces.filter(ws => ws.id !== id);
+        if (this.activeWorkspaceId === id) {
+            this.activeWorkspaceId = this.workspaces[Math.max(0, index - 1)].id;
+        }
     }
 
     addItem({

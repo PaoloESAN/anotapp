@@ -1,17 +1,20 @@
 <script lang="ts">
     import CirclePause from "@lucide/svelte/icons/circle-pause";
     import CirclePlay from "@lucide/svelte/icons/circle-play";
+    import { desktopState } from "../../routes/desktop-state.svelte";
 
     let {
         paused = $bindable(false),
     }: {
         paused: boolean;
     } = $props();
+
+    const hasItems = $derived(desktopState.items.length > 0);
 </script>
 
 <button
     onclick={() => (paused = !paused)}
-    class="group fixed bottom-20 right-6 z-50 flex items-center rounded-full border backdrop-blur p-3 hover:px-5 text-sm font-semibold shadow-xl transition-all duration-300 ease-out {paused
+    class="group fixed {hasItems ? 'bottom-20' : 'bottom-6'} right-6 z-50 flex items-center rounded-full border backdrop-blur p-3 hover:px-5 text-sm font-semibold shadow-xl transition-all duration-300 ease-out {paused
         ? 'border-primary/60 bg-primary/15 text-primary hover:bg-primary/25 hover:border-primary/80'
         : 'border-border/50 bg-white/80 dark:bg-zinc-900/80 text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'}"
     title={paused ? "Reanudar captura" : "Pausar captura"}
