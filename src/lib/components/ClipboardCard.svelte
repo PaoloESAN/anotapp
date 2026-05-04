@@ -40,6 +40,7 @@
     tabindex="-1"
     aria-label="Tarjeta del portapapeles"
     id="card-{item.id}"
+    data-card-id={item.id}
     in:fly={{ y: 20, duration: 400, opacity: 0 }}
     out:fade={{ duration: 200 }}
     class="absolute group select-none flex flex-col {desktopState.draggedItemId ===
@@ -66,12 +67,13 @@
             await tick();
         }
         
-        desktopState.contextMenu = {
-            open: true,
-            x: e.clientX,
-            y: e.clientY,
-            item: item,
-        };
+        // Pequeño retardo para asegurar que el componente anterior se desmontó
+        await tick();
+
+        desktopState.contextMenu.x = e.clientX;
+        desktopState.contextMenu.y = e.clientY;
+        desktopState.contextMenu.item = item;
+        desktopState.contextMenu.open = true;
     }}
 >
     <!-- Card Container -->

@@ -29,7 +29,7 @@
 	}
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} oncontextmenu={(e) => e.preventDefault()} />
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 <ModeWatcher />
 {@render children()}

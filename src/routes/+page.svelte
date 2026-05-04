@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
+    import { onMount, onDestroy, tick } from "svelte";
     import {
         startListening,
         onTextUpdate,
@@ -40,7 +40,38 @@
         desktopState.isOcrModalOpen = true;
     }
 
+    async function handleGlobalContextMenu(e: MouseEvent) {
+        const target = e.target as HTMLElement;
+        const cardDiv = target.closest("[data-card-id]");
+        
+        if (cardDiv) {
+            const cardId = cardDiv.getAttribute("data-card-id");
+            const item = desktopState.items.find((i) => i.id === cardId);
+            
+            if (item) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (desktopState.contextMenu.open) {
+                    desktopState.contextMenu.open = false;
+                    await tick();
+                }
+
+                setTimeout(async () => {
+                    await tick();
+                    desktopState.contextMenu.x = e.clientX;
+                    desktopState.contextMenu.y = e.clientY;
+                    desktopState.contextMenu.item = item;
+                    desktopState.contextMenu.open = true;
+                }, 20);
+            }
+        }
+    }
+
     onMount(async () => {
+        window.addEventListener("contextmenu", handleGlobalContextMenu, {
+            capture: true,
+        });
         window.addEventListener("anotapp-bg-updated", ((e: CustomEvent) => {
             desktopState.customBgImage = e.detail;
         }) as EventListener);
@@ -95,6 +126,9 @@
     });
 
     onDestroy(async () => {
+        window.removeEventListener("contextmenu", handleGlobalContextMenu, {
+            capture: true,
+        });
         if (stopListening) await stopListening();
         if (desktopState.peerInstance) desktopState.peerInstance.destroy();
     });

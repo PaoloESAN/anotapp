@@ -21,14 +21,15 @@
 
 {#if desktopState.contextMenu.open}
     <div
-        class="fixed z-9999"
+        class="fixed z-9999 pointer-events-none"
         style="left: {desktopState.contextMenu.x}px; top: {desktopState
             .contextMenu.y}px;"
     >
         <DropdownMenu.Root bind:open={desktopState.contextMenu.open}>
             <DropdownMenu.Trigger class="w-0 h-0" />
             <DropdownMenu.Content
-                class="w-auto min-w-[120px] max-w-[200px] bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl p-1 z-100 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+                preventScroll={false}
+                class="w-auto min-w-[120px] max-w-[200px] bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl p-1 z-10000 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
                 align="start"
             >
                 <DropdownMenu.Item
