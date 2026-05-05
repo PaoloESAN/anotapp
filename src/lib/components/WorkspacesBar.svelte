@@ -85,10 +85,10 @@
 >
     <!-- Dock / Handle Morphing - Contenedor único que se expande -->
     <div
-        class="flex items-center border border-border/50 bg-zinc-900/95 backdrop-blur-xl shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden
+        class="flex items-center border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden
         {isExpandedActual
             ? 'min-w-[140px] w-fit max-w-[90vw] h-14 p-2 rounded-full opacity-100 translate-y-0'
-            : 'min-w-[140px] max-w-[140px] h-2 p-0 rounded-full opacity-60 translate-y-4'}"
+            : 'min-w-[140px] max-w-[140px] h-2 p-0 rounded-full opacity-80 translate-y-4 bg-background cursor-pointer'}"
     >
         <!-- Contenido del Dock -->
         {#if isExpanded}
@@ -111,7 +111,7 @@
                             class="px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 min-w-[70px] justify-center relative
                             {desktopState.activeWorkspaceId === ws.id
                                 ? 'bg-primary/20 text-primary border border-primary/30 shadow-[0_8px_16px_-6px_rgba(var(--primary-rgb),0.2)] backdrop-blur-md'
-                                : 'text-muted-foreground/70 hover:bg-white/10 hover:text-foreground'}
+                                : 'text-muted-foreground/70 hover:bg-foreground/10 hover:text-foreground hover:ring-1 hover:ring-border/50'}
                             {desktopState.draggedItemId
                                 ? 'ring-2 ring-primary/20 scale-105'
                                 : ''}"
@@ -130,7 +130,7 @@
                                     <input
                                         id="edit-ws-{ws.id}"
                                         bind:value={editValue}
-                                        class="absolute inset-0 bg-black/60 border border-white/20 outline-none text-center w-full rounded-full text-white px-3 font-bold text-sm focus:ring-1 focus:ring-primary/50"
+                                        class="absolute inset-0 bg-muted border border-border outline-none text-center w-full rounded-full text-foreground px-3 font-bold text-sm focus:ring-1 focus:ring-primary/50"
                                         onblur={() => saveName(ws.id)}
                                         onkeydown={(e) =>
                                             handleKeydown(e, ws.id)}
@@ -168,7 +168,7 @@
                 ></div>
 
                 <button
-                    class="w-10 h-10 flex items-center justify-center rounded-full text-muted-foreground/70 hover:bg-white/10 hover:text-foreground transition-all active:scale-90"
+                    class="w-10 h-10 flex items-center justify-center rounded-full text-muted-foreground/70 hover:bg-foreground/5 hover:text-foreground hover:ring-1 hover:ring-border/50 transition-all active:scale-90"
                     onclick={() => desktopState.addWorkspace()}
                     title="Nueva Mesa"
                     in:fly={{
