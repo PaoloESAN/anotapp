@@ -239,10 +239,13 @@
 </main>
 
 <style>
-    :global(body) {
+    :global(html, body) {
         margin: 0;
         padding: 0;
         background: #09090b;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
     }
     :global(.custom-scrollbar::-webkit-scrollbar) {
         width: 4px;
