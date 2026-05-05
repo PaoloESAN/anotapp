@@ -85,7 +85,7 @@
 >
     <!-- Dock / Handle Morphing - Contenedor único que se expande -->
     <div
-        class="flex items-center border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden
+        class="flex items-center border border-border bg-background/95 backdrop-blur-xl shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden
         {isExpandedActual
             ? 'min-w-[140px] w-fit max-w-[90vw] h-14 p-2 rounded-full opacity-100 translate-y-0'
             : 'min-w-[140px] max-w-[140px] h-2 p-0 rounded-full opacity-80 translate-y-4 bg-background cursor-pointer'}"
