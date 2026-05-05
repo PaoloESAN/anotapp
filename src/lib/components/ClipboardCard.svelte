@@ -10,7 +10,7 @@
     import { desktopState } from "../../routes/desktop-state.svelte";
 
     let {
-        item,
+        item = $bindable(),
         onBringToFront,
         onDragStart,
         onResizeStart,

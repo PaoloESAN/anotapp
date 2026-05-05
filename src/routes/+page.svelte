@@ -175,9 +175,9 @@
         hasItems={desktopState.items.length > 0}
     />
 
-    {#each desktopState.items as item (item.id)}
+    {#each desktopState.items as _, i (desktopState.items[i].id)}
         <ClipboardCard
-            {item}
+            bind:item={desktopState.items[i]}
             onBringToFront={(id) => {
                 const item = desktopState.items.find((i) => i.id === id);
                 if (item) item.z = desktopState.maxZ++;
