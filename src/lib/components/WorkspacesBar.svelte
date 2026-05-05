@@ -3,7 +3,7 @@
     import Plus from "@lucide/svelte/icons/plus";
     import X from "@lucide/svelte/icons/x";
     import AlertCircle from "@lucide/svelte/icons/alert-circle";
-    import { fade, fly, scale } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import { quintOut } from "svelte/easing";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { tick } from "svelte";
@@ -12,20 +12,18 @@
     let editValue = $state("");
     let isHovered = $state(false);
 
-    // Expand when hovered OR when dragging AND near the bottom
     let isExpandedActual = $derived(
         isHovered ||
             (!!desktopState.draggedItemId &&
                 desktopState.pointerY > window.innerHeight - 100),
     );
 
-    // Visual state that stays expanded until children finish animating out
     let isExpanded = $state(false);
     $effect(() => {
         if (isExpandedActual) {
             isExpanded = true;
         } else {
-            const timer = setTimeout(() => (isExpanded = false), 350);
+            const timer = setTimeout(() => (isExpanded = false), 80);
             return () => clearTimeout(timer);
         }
     });
@@ -60,8 +58,13 @@
     }
 
     function requestDelete(id: string) {
-        workspaceToDelete = id;
-        showDeleteAlert = true;
+        const ws = desktopState.workspaces.find((w) => w.id === id);
+        if (ws && ws.items.length > 0) {
+            workspaceToDelete = id;
+            showDeleteAlert = true;
+        } else {
+            desktopState.removeWorkspace(id);
+        }
     }
 
     function confirmDelete() {
@@ -73,25 +76,26 @@
     }
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     class="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-end pb-6 h-24"
+    role="region"
+    aria-label="Barra de espacios de trabajo"
     onmouseenter={() => (isHovered = true)}
     onmouseleave={() => (isHovered = false)}
 >
     <!-- Dock / Handle Morphing - Contenedor único que se expande -->
     <div
-        class="flex items-center border border-border/50 bg-zinc-900/95 backdrop-blur-xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden
-        {isExpanded
-            ? 'max-w-[1000px] max-h-[80px] p-2 rounded-full opacity-100 translate-y-0'
-            : 'max-w-[160px] max-h-[10px] w-40 h-2.5 p-0 rounded-full opacity-100 translate-y-4 hover:bg-zinc-800 cursor-pointer'}"
+        class="flex items-center border border-border/50 bg-zinc-900/95 backdrop-blur-xl shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden
+        {isExpandedActual
+            ? 'min-w-[140px] w-fit max-w-[90vw] h-14 p-2 rounded-full opacity-100 translate-y-0'
+            : 'min-w-[140px] max-w-[140px] h-2 p-0 rounded-full opacity-60 translate-y-4'}"
     >
         <!-- Contenido del Dock -->
         {#if isExpanded}
             <div
                 class="flex items-center gap-1.5"
                 in:fly={{ y: 20, duration: 400, easing: quintOut }}
-                out:fly={{ y: 20, duration: 250 }}
+                out:fly={{ y: 20, duration: 300 }}
             >
                 {#each desktopState.workspaces as ws, i (ws.id)}
                     <div class="relative group flex items-center">
@@ -169,8 +173,8 @@
                     title="Nueva Mesa"
                     in:fly={{
                         y: 20,
-                        duration: 500,
-                        delay: 100 + (desktopState.workspaces.length + 1) * 40,
+                        duration: 400,
+                        delay: 50,
                         easing: quintOut,
                     }}
                 >
