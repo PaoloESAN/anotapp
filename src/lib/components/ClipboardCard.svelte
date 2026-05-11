@@ -140,40 +140,42 @@
                     {/if}
                 </div>
 
-                <div
-                    class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                >
-                    {#if item.type === "image" && onScanText}
+                {#if !hideCardButtons}
+                    <div
+                        class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    >
+                        {#if item.type === "image" && onScanText}
+                            <button
+                                onpointerdown={(e) => e.stopPropagation()}
+                                onclick={() => onScanText(item)}
+                                class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                title="Extraer Texto (OCR)"
+                            >
+                                <ScanText class="w-3.5 h-3.5" />
+                            </button>
+                        {/if}
                         <button
                             onpointerdown={(e) => e.stopPropagation()}
-                            onclick={() => onScanText(item)}
-                            class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                            title="Extraer Texto (OCR)"
+                            onclick={() => onCopy(item)}
+                            class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors"
+                            title="Copiar"
                         >
-                            <ScanText class="w-3.5 h-3.5" />
+                            <Copy class="w-3.5 h-3.5" />
                         </button>
-                    {/if}
-                    <button
-                        onpointerdown={(e) => e.stopPropagation()}
-                        onclick={() => onCopy(item)}
-                        class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors"
-                        title="Copiar"
-                    >
-                        <Copy class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                        onpointerdown={(e) => e.stopPropagation()}
-                        onclick={() => onDelete(item.id)}
-                        class="p-1.5 hover:bg-red-500/20 rounded-md text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors ml-1"
-                        title="Eliminar"
-                    >
-                        <Trash2 class="w-3.5 h-3.5" />
-                    </button>
-                </div>
+                        <button
+                            onpointerdown={(e) => e.stopPropagation()}
+                            onclick={() => onDelete(item.id)}
+                            class="p-1.5 hover:bg-red-500/20 rounded-md text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors ml-1"
+                            title="Eliminar"
+                        >
+                            <Trash2 class="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                {/if}
             </div>
         {/if}
 
-        {#if !hideCardButtons}
+        {#if hideHeaders && !hideCardButtons}
             <!-- Floating Actions for hideHeaders mode -->
             <div
                 class="absolute top-2 right-2 flex {cardHeight < 90
