@@ -1,5 +1,4 @@
 import { type DataConnection } from "peerjs";
-import { setMode, resetMode } from "mode-watcher";
 
 export type ConnectionStatus = "idle" | "connecting" | "connected" | "error" | "reconnecting";
 
@@ -10,16 +9,27 @@ class MobileState {
     connection = $state<DataConnection | null>(null);
     textInput = $state("");
     inputCode = $state("");
+    pendingFiles = $state<{ type: string; content: string }[]>([]);
+    isUploading = $state(false);
 
     constructor() {
         if (typeof sessionStorage !== "undefined") {
             const savedText = sessionStorage.getItem("anotapp_textInput");
             if (savedText) this.textInput = savedText;
-            
+
             const savedPeerId = sessionStorage.getItem("anotapp_peerId");
             if (savedPeerId) {
                 this.peerId = savedPeerId;
                 this.inputCode = savedPeerId;
+            }
+
+            const savedPending = sessionStorage.getItem("anotapp_pendingFiles");
+            if (savedPending) {
+                try {
+                    this.pendingFiles = JSON.parse(savedPending);
+                } catch (e) {
+                    console.error("Failed to parse pending files:", e);
+                }
             }
         }
     }
@@ -29,6 +39,7 @@ class MobileState {
         $effect(() => {
             if (typeof sessionStorage !== "undefined") {
                 sessionStorage.setItem("anotapp_textInput", this.textInput);
+                sessionStorage.setItem("anotapp_pendingFiles", JSON.stringify(this.pendingFiles));
             }
         });
     }
@@ -76,6 +87,7 @@ class MobileState {
 
                 conn.on("open", () => {
                     this.status = "connected";
+                    this.sendPendingFiles();
                 });
 
                 conn.on("error", (err: any) => {
@@ -123,7 +135,7 @@ class MobileState {
         this.peerId = "";
         this.inputCode = "";
         this.status = "idle";
-        
+
         if (typeof window !== "undefined") {
             const url = new URL(window.location.href);
             url.searchParams.delete("peerId");
@@ -143,9 +155,23 @@ class MobileState {
         this.textInput = "";
     }
 
-    handleImageUpload(e: Event) {
-        if (!this.connection || this.status !== "connected") return;
+    sendPendingFiles() {
+        if (!this.connection || this.status !== "connected" || this.pendingFiles.length === 0) return;
 
+        this.isUploading = true;
+        const filesToSend = [...this.pendingFiles];
+        this.pendingFiles = [];
+
+        for (const file of filesToSend) {
+            this.connection.send(file);
+        }
+
+        setTimeout(() => {
+            this.isUploading = false;
+        }, 800);
+    }
+
+    handleImageUpload(e: Event) {
         const input = e.target as HTMLInputElement;
         if (!input.files || input.files.length === 0) return;
 
@@ -154,10 +180,18 @@ class MobileState {
 
         reader.onload = (ev) => {
             const dataUrl = ev.target?.result as string;
-            this.connection!.send({
+            const payload = {
                 type: "image",
                 content: dataUrl,
-            });
+            };
+
+            if (this.connection && this.status === "connected") {
+                this.isUploading = true;
+                this.connection.send(payload);
+                setTimeout(() => this.isUploading = false, 500);
+            } else {
+                this.pendingFiles = [...this.pendingFiles, payload];
+            }
             input.value = "";
         };
 

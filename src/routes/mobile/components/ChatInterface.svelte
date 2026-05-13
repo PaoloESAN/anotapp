@@ -5,6 +5,7 @@
     import Camera from "@lucide/svelte/icons/camera";
     import ImagePlus from "@lucide/svelte/icons/image-plus";
     import ArrowUp from "@lucide/svelte/icons/arrow-up";
+    import Loader2 from "@lucide/svelte/icons/loader-2";
     import { mobileState } from "../mobile-state.svelte";
 </script>
 
@@ -21,6 +22,19 @@
                 }
             }}
         ></textarea>
+
+        {#if mobileState.isUploading || mobileState.pendingFiles.length > 0}
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-xl mb-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                <Loader2 class="w-3.5 h-3.5 animate-spin text-primary" />
+                <span class="text-[12px] font-medium text-primary/80">
+                    {#if mobileState.isUploading}
+                        Enviando imagen...
+                    {:else}
+                        {mobileState.pendingFiles.length} {mobileState.pendingFiles.length === 1 ? 'imagen' : 'imágenes'} esperando conexión...
+                    {/if}
+                </span>
+            </div>
+        {/if}
 
         <div class="flex items-center justify-between mt-2 px-1">
             <div class="flex items-center gap-2">
