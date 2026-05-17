@@ -166,17 +166,17 @@
                 >
                     <Tabs.Trigger
                         value="appearance"
-                        class="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        class="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-sm"
                         >Apariencia</Tabs.Trigger
                     >
                     <Tabs.Trigger
                         value="interface"
-                        class="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        class="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-sm"
                         >Interfaz</Tabs.Trigger
                     >
                     <Tabs.Trigger
                         value="data"
-                        class="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        class="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-sm"
                         >Datos</Tabs.Trigger
                     >
                 </Tabs.List>

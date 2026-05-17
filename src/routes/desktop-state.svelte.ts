@@ -36,6 +36,7 @@ class DesktopState {
     hideCardButtons = $state(false);
     bgPattern = $state("grid");
     customBgImage = $state("");
+    isCtrlPressed = $state(false);
 
     contextMenu = $state<{
         open: boolean;
@@ -129,6 +130,22 @@ class DesktopState {
 
             return () => clearTimeout(timer);
         });
+
+        if (typeof window !== "undefined") {
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (e.key === 'Control' || e.key === 'Meta') this.isCtrlPressed = true;
+            };
+            const handleKeyUp = (e: KeyboardEvent) => {
+                if (e.key === 'Control' || e.key === 'Meta') this.isCtrlPressed = false;
+            };
+            const handleBlur = () => {
+                this.isCtrlPressed = false;
+            };
+
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            window.addEventListener('blur', handleBlur);
+        }
     }
 
     addWorkspace() {

@@ -3,9 +3,9 @@
     import { tick } from "svelte";
     import Trash2 from "@lucide/svelte/icons/trash-2";
     import Copy from "@lucide/svelte/icons/copy";
+    import Pen from "@lucide/svelte/icons/pen";
     import FileIcon from "@lucide/svelte/icons/file";
     import ScanText from "@lucide/svelte/icons/scan-text";
-    import MoveRight from "@lucide/svelte/icons/move-right";
     import Download from "@lucide/svelte/icons/download";
     import type { ClipboardItem } from "$lib/types";
     import { desktopState } from "../../routes/desktop-state.svelte";
@@ -142,6 +142,16 @@
                     <div
                         class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                     >
+                        {#if item.type === "text"}
+                            <button
+                                onpointerdown={(e) => e.stopPropagation()}
+                                onclick={() => (item.editing = true)}
+                                class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                title="Editar texto"
+                            >
+                                <Pen class="w-3.5 h-3.5" />
+                            </button>
+                        {/if}
                         {#if item.type === "image" && onScanText}
                             <button
                                 onpointerdown={(e) => e.stopPropagation()}
@@ -193,6 +203,16 @@
                     ? 'flex-row'
                     : 'flex-col'} gap-1.5 items-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-50"
             >
+                {#if item.type === "text"}
+                    <button
+                        onpointerdown={(e) => e.stopPropagation()}
+                        onclick={() => (item.editing = true)}
+                        class="p-2 bg-white/95 dark:bg-zinc-900/95 shadow-md border border-slate-200/80 dark:border-zinc-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        title="Editar texto"
+                    >
+                        <Pen class="w-4 h-4" />
+                    </button>
+                {/if}
                 {#if item.type === "image" && onScanText}
                     <button
                         onpointerdown={(e) => e.stopPropagation()}
@@ -274,7 +294,6 @@
                             }
                         }}
                         class="w-full h-full bg-slate-50/50 dark:bg-zinc-950/50 rounded px-1 py-0.5 text-slate-800 dark:text-zinc-200 text-sm font-medium leading-relaxed resize-none outline-none ring-1 ring-indigo-500/50 custom-scrollbar wrap-break-word placeholder:text-slate-400/60 dark:placeholder:text-zinc-500/40"
-                        style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent;"
                     ></textarea>
                 {:else}
                     <div
@@ -282,16 +301,19 @@
                         tabindex="-1"
                         aria-label="Contenido de texto"
                         onpointerdown={(e) => {
-                            if (e.target === e.currentTarget) {
-                                onDragStart(e, item.id);
-                            } else {
+                            if (e.ctrlKey || e.metaKey) {
                                 e.stopPropagation();
+                            } else {
+                                onDragStart(e, item.id);
                             }
                         }}
-                        ondblclick={() => (item.editing = true)}
                         class="text-slate-800 dark:text-zinc-200 text-sm font-medium leading-relaxed w-full h-full overflow-y-auto pr-3 custom-scrollbar wrap-break-word select-text rounded"
-                        style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent; cursor: grab;"
-                        title="Doble clic para editar"
+                        style="cursor: {item.editing
+                            ? 'text'
+                            : desktopState.isCtrlPressed
+                              ? 'text'
+                              : 'grab'};"
+                        title="Arrastra para mover. Ctrl + Arrastrar para seleccionar."
                     >
                         {#if !item.content || item.content.trim() === ""}
                             <span
@@ -302,8 +324,7 @@
                             <span
                                 role="presentation"
                                 tabindex="-1"
-                                class="select-text cursor-text hover:bg-slate-100/50 dark:hover:bg-zinc-800/20 rounded transition-colors inline-block w-full"
-                                onpointerdown={(e) => e.stopPropagation()}
+                                class="hover:bg-slate-100/50 dark:hover:bg-zinc-800/20 rounded transition-colors inline-block w-full whitespace-pre-wrap"
                                 >{item.content}</span
                             >
                         {/if}
@@ -403,7 +424,7 @@
                     cardWidth < 320 ? 88 : cardWidth < 500 ? 108 : 132}
                 <div
                     class="w-full h-full overflow-y-auto grid gap-2 p-1.5 content-start custom-scrollbar"
-                    style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent; grid-template-columns: repeat(auto-fill, minmax({colMin}px, 1fr));"
+                    style="grid-template-columns: repeat(auto-fill, minmax({colMin}px, 1fr));"
                 >
                     {#each item.files ?? [] as filePath}
                         {@const fileName =
@@ -426,7 +447,6 @@
                 <!-- Multiple files, narrow: horizontal list — icon left, name right -->
                 <div
                     class="w-full h-full overflow-y-auto flex flex-col gap-1 custom-scrollbar"
-                    style="scrollbar-width: thin; scrollbar-color: #a1a1aa transparent;"
                 >
                     {#each item.files ?? [] as filePath}
                         {@const fileName =
