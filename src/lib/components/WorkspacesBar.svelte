@@ -77,7 +77,7 @@
 </script>
 
 <div
-    class="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-end pb-6 h-24"
+    class="fixed bottom-0 left-1/2 -translate-x-1/2 z-9999 flex flex-col items-center justify-end pb-6 h-24"
     role="region"
     aria-label="Barra de espacios de trabajo"
     onmouseenter={() => (isHovered = true)}

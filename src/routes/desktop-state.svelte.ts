@@ -520,6 +520,42 @@ class DesktopState {
             this.ocrLoading = false;
         }
     }
+
+    async exportWorkspaces() {
+        try {
+            const data = JSON.stringify(this.workspaces, null, 2);
+            const blob = new Blob([data], { type: "application/json" });
+            const dateStr = new Date().toISOString().split("T")[0];
+            await this.triggerDownload(blob, `anotapp-backup-${dateStr}.json`);
+        } catch (err) {
+            console.error("Error al exportar los datos:", err);
+        }
+    }
+
+    async importWorkspaces(file: File) {
+        try {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                this.workspaces = parsed;
+                let currentMaxZ = 1;
+                this.workspaces.forEach(ws => {
+                    ws.items.forEach(item => {
+                        if (item.z && item.z >= currentMaxZ) currentMaxZ = item.z + 1;
+                    });
+                });
+                this.maxZ = currentMaxZ;
+                if (this.workspaces.length > 0) {
+                    this.activeWorkspaceId = this.workspaces[0].id;
+                }
+            } else {
+                alert("El archivo no tiene el formato correcto.");
+            }
+        } catch (err) {
+            console.error("Error al importar los datos:", err);
+            alert("Hubo un error al leer el archivo. Asegúrate de que sea un archivo JSON válido de Anotapp.");
+        }
+    }
 }
 
 export const desktopState = new DesktopState();
