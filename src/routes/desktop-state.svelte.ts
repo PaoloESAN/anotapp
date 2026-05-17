@@ -13,8 +13,7 @@ class DesktopState {
         { id: "ws-default", name: "Mesa 1", items: [] }
     ]);
     activeWorkspaceId = $state("ws-default");
-    
-    // Getters for convenience
+
     get activeWorkspace() {
         return this.workspaces.find(ws => ws.id === this.activeWorkspaceId) || this.workspaces[0];
     }
@@ -37,7 +36,7 @@ class DesktopState {
     hideCardButtons = $state(false);
     bgPattern = $state("grid");
     customBgImage = $state("");
-    
+
     contextMenu = $state<{
         open: boolean;
         x: number;
@@ -49,18 +48,21 @@ class DesktopState {
         y: 0,
         item: null,
     });
-    
+
     peerId = $state("");
     peerInstance: any = null;
-    
+
     draggedItemId = $state<string | null>(null);
     pointerY = $state(0);
-    
+
     ocrText = $state("");
     ocrLoading = $state(false);
     ocrImageSrc = $state("");
     isOcrModalOpen = $state(false);
     isMobileLinkOpen = $state(false);
+
+    hostConnection = $state<DataConnection | null>(null);
+    clientConnections = $state<DataConnection[]>([]);
 
     constructor() {
         if (typeof localStorage !== "undefined") {
@@ -91,7 +93,7 @@ class DesktopState {
 
                 const savedBg = localStorage.getItem("anotapp-bg-pattern");
                 if (savedBg) this.bgPattern = savedBg;
-                
+
                 const savedCustomBg = localStorage.getItem("anotapp-custom-bg-image");
                 if (savedCustomBg) this.customBgImage = savedCustomBg;
             } catch (e) {
@@ -158,8 +160,8 @@ class DesktopState {
         files?: string[];
         w?: number;
         h?: number;
-    }) {
-        this.items.push({
+    }, fromPeer = false) {
+        const newItem = {
             id: crypto.randomUUID(),
             type,
             content,
@@ -169,13 +171,18 @@ class DesktopState {
             z: this.maxZ++,
             w,
             h,
-        });
+        };
+        this.items.push(newItem);
+
+        if (!fromPeer) {
+            this.broadcastToClients({ type: "add-item", item: newItem });
+        }
     }
 
     addEmptyText() {
-        this.items.push({
+        const newItem = {
             id: crypto.randomUUID(),
-            type: "text",
+            type: "text" as const,
             content: "",
             x: window.innerWidth / 2 - 140 + (Math.random() * 40 - 20),
             y: window.innerHeight / 2 - 75 + (Math.random() * 40 - 20),
@@ -183,10 +190,12 @@ class DesktopState {
             w: 280,
             h: 150,
             editing: false,
-        });
+        };
+        this.items.push(newItem);
+        this.broadcastToClients({ type: "add-item", item: newItem });
     }
 
-    async handleImageUpdate(b64: string) {
+    async handleImageUpdate(b64: string, fromPeer = false) {
         try {
             if (!b64 || b64.length === this.lastImageB64Len) return;
             this.lastImageB64Len = b64.length;
@@ -219,8 +228,8 @@ class DesktopState {
                 content: dataUrl,
                 w: targetW,
                 h: targetH,
-            });
-        } catch (err) {}
+            }, fromPeer);
+        } catch (err) { }
     }
 
     handleFilesUpdate(files: string[]) {
@@ -252,7 +261,7 @@ class DesktopState {
                 sourceWsId = ws.id;
                 // Don't move to the same workspace
                 if (ws.id === targetWorkspaceId) return;
-                
+
                 // Remove from source
                 ws.items = ws.items.filter(i => i.id !== itemId);
                 break;
@@ -271,18 +280,115 @@ class DesktopState {
         }
     }
 
+    deleteItem(id: string, fromPeer = false) {
+        this.items = this.items.filter((i) => i.id !== id);
+        if (!fromPeer) {
+            this.broadcastToClients({ type: "delete", id });
+        }
+    }
+
+    updateItemBounds(id: string, x: number, y: number, w: number | undefined, h: number | undefined, z: number | undefined, fromPeer = false) {
+        const item = this.items.find((i) => i.id === id);
+        if (item) {
+            if (x !== undefined) item.x = x;
+            if (y !== undefined) item.y = y;
+            if (w !== undefined) item.w = w;
+            if (h !== undefined) item.h = h;
+            if (z !== undefined) item.z = z;
+        }
+        if (!fromPeer) {
+            this.broadcastToClients({ type: "update-bounds", id, x, y, w, h, z });
+        }
+    }
+
+    updateItemContent(id: string, content: string, fromPeer = false) {
+        const item = this.items.find((i) => i.id === id);
+        if (item && item.type === "text") {
+            item.content = content;
+        }
+        if (!fromPeer) {
+            this.broadcastToClients({ type: "update-content", id, content });
+        }
+    }
+
+    connectToHost(hostId: string) {
+        if (!this.peerInstance) return;
+
+        const conn = this.peerInstance.connect(hostId);
+
+        conn.on("open", () => {
+            this.hostConnection = conn;
+            this.isMobileLinkOpen = false;
+        });
+
+        conn.on("data", (data: any) => {
+            this.handleIncomingPeerData(data);
+        });
+
+        conn.on("close", () => {
+            this.hostConnection = null;
+        });
+
+        conn.on("error", (err: any) => {
+            console.error("Connection error:", err);
+            this.hostConnection = null;
+        });
+    }
+
+    broadcastToClients(data: any) {
+        // Enviar a todos los clientes conectados si somos el anfitrión
+        this.clientConnections.forEach(conn => {
+            if (conn.open) conn.send(data);
+        });
+        // Si somos un cliente, enviarlo al anfitrión para que lo distribuya
+        if (this.hostConnection && this.hostConnection.open) {
+            this.hostConnection.send(data);
+        }
+    }
+
     async handleIncomingPeerData(data: any) {
         if (!data || !data.type) return;
+
+        if (data.type === "sync-state" && data.items) {
+            this.items = data.items;
+            return;
+        }
+
+        if (data.type === "delete" && data.id) {
+            this.deleteItem(data.id, true);
+            return;
+        }
+
+        if (data.type === "update-bounds" && data.id) {
+            this.updateItemBounds(data.id, data.x, data.y, data.w, data.h, data.z, true);
+            return;
+        }
+
+        if (data.type === "update-content" && data.id) {
+            this.updateItemContent(data.id, data.content, true);
+            return;
+        }
+
+        if (data.type === "add-item" && data.item) {
+            if (!this.items.find((i) => i.id === data.item.id)) {
+                this.items.push(data.item);
+                if (data.item.z >= this.maxZ) {
+                    this.maxZ = data.item.z + 1;
+                }
+            }
+            return;
+        }
+
         if (data.type === "text" && data.content) {
             if (this.items.find((i) => i.type === "text" && i.content === data.content))
                 return;
-            this.addItem({ type: "text", content: data.content });
+            this.addItem({ type: "text", content: data.content }, true);
         } else if (data.type === "image" && data.content) {
             let b64 = data.content;
             if (b64.startsWith("data:image")) {
                 b64 = b64.split(",")[1];
             }
-            await this.handleImageUpdate(b64);
+            await this.handleImageUpdate(b64, true);
         }
     }
 

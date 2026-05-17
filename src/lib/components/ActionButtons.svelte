@@ -1,7 +1,7 @@
 <script lang="ts">
     import Plus from "@lucide/svelte/icons/plus";
     import SettingsIcon from "@lucide/svelte/icons/settings";
-    import Smartphone from "@lucide/svelte/icons/smartphone";
+    import MonitorSmartphone from "@lucide/svelte/icons/monitor-smartphone";
     import { desktopState } from "../../routes/desktop-state.svelte";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import Type from "@lucide/svelte/icons/type";
@@ -51,9 +51,9 @@
     <button
         onclick={openMobileLink}
         class="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-md text-muted-foreground shadow-md transition-all hover:bg-muted hover:border-border hover:text-foreground hover:scale-105 active:scale-95"
-        title="Vincular Celular"
+        title="Vincular Dispositivos"
     >
-        <Smartphone class="w-5 h-5" />
+        <MonitorSmartphone class="w-5 h-5" />
     </button>
 
     <DropdownMenu.Root bind:open={isMenuOpen}>

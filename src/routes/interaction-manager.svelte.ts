@@ -84,16 +84,28 @@ class InteractionManager {
 
     onPointerUp(e: PointerEvent) {
         if (!this.activeDrag && !this.activeResize) return;
-        
+
+        let modifiedItemId: string | null = null;
+
         if (this.activeDrag) {
-            // Check if dropped on a workspace button
+            modifiedItemId = this.activeDrag.id;
             const element = document.elementFromPoint(e.clientX, e.clientY);
             const wsButton = element?.closest("[data-workspace-button]");
             if (wsButton) {
                 const wsId = wsButton.getAttribute("data-workspace-id");
                 if (wsId) {
                     desktopState.moveItemToWorkspace(this.activeDrag.id, wsId);
+                    modifiedItemId = null;
                 }
+            }
+        } else if (this.activeResize) {
+            modifiedItemId = this.activeResize.id;
+        }
+
+        if (modifiedItemId) {
+            const item = desktopState.items.find(i => i.id === modifiedItemId);
+            if (item) {
+                desktopState.updateItemBounds(item.id, item.x, item.y, item.w, item.h, item.z);
             }
         }
 
@@ -101,7 +113,7 @@ class InteractionManager {
             const el = e.target as HTMLElement;
             if (el && el.releasePointerCapture)
                 el.releasePointerCapture(e.pointerId);
-        } catch (err) {}
+        } catch (err) { }
         this.activeDrag = null;
         this.activeResize = null;
         desktopState.draggedItemId = null;

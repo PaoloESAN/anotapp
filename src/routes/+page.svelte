@@ -30,7 +30,7 @@
     let stopListening: (() => Promise<void>) | null = null;
 
     function onDelete(id: string) {
-        desktopState.items = desktopState.items.filter((i) => i.id !== id);
+        desktopState.deleteItem(id);
     }
 
     function onScanText(item: ClipboardItem) {
@@ -43,11 +43,11 @@
     async function handleGlobalContextMenu(e: MouseEvent) {
         const target = e.target as HTMLElement;
         const cardDiv = target.closest("[data-card-id]");
-        
+
         if (cardDiv) {
             const cardId = cardDiv.getAttribute("data-card-id");
             const item = desktopState.items.find((i) => i.id === cardId);
-            
+
             if (item) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -101,23 +101,83 @@
         // Initialize PeerJS
         try {
             const { Peer } = await import("peerjs");
-            const id = crypto.randomUUID();
-            desktopState.peerInstance = new Peer(id);
 
-            desktopState.peerInstance.on("open", (id: string) => {
-                desktopState.peerId = id;
-            });
+            const generateShortId = () => {
+                const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                let result = "";
+                for (let i = 0; i < 6; i++) {
+                    result += chars.charAt(
+                        Math.floor(Math.random() * chars.length),
+                    );
+                }
+                return result;
+            };
 
-            desktopState.peerInstance.on(
-                "connection",
-                (conn: DataConnection) => {
-                    desktopState.isMobileLinkOpen = false;
+            const initPeer = () => {
+                const id = generateShortId();
+                desktopState.peerInstance = new Peer(id);
 
-                    conn.on("data", (data: any) => {
-                        desktopState.handleIncomingPeerData(data);
-                    });
-                },
-            );
+                desktopState.peerInstance.on("open", (id: string) => {
+                    desktopState.peerId = id;
+                });
+
+                desktopState.peerInstance.on(
+                    "connection",
+                    (conn: DataConnection) => {
+                        // Limitar a 3 dispositivos máximo (sin contar esta PC)
+                        if (desktopState.clientConnections.length >= 3) {
+                            conn.on("open", () => {
+                                conn.send({
+                                    type: "error",
+                                    message:
+                                        "Límite de dispositivos alcanzado (3 max).",
+                                });
+                                setTimeout(() => conn.close(), 500);
+                            });
+                            return;
+                        }
+
+                        desktopState.isMobileLinkOpen = false;
+
+                        conn.on("open", () => {
+                            desktopState.clientConnections.push(conn);
+                            // Sincronizar el estado actual al nuevo cliente
+                            conn.send({
+                                type: "sync-state",
+                                items: desktopState.items,
+                            });
+                        });
+
+                        conn.on("data", (data: any) => {
+                            desktopState.handleIncomingPeerData(data);
+                        });
+
+                        conn.on("close", () => {
+                            desktopState.clientConnections =
+                                desktopState.clientConnections.filter(
+                                    (c) => c !== conn,
+                                );
+                        });
+
+                        conn.on("error", () => {
+                            desktopState.clientConnections =
+                                desktopState.clientConnections.filter(
+                                    (c) => c !== conn,
+                                );
+                        });
+                    },
+                );
+
+                desktopState.peerInstance.on("error", (err: any) => {
+                    if (err.type === "unavailable-id") {
+                        console.warn("ID en uso, regenerando...");
+                        desktopState.peerInstance?.destroy();
+                        setTimeout(initPeer, 500);
+                    }
+                });
+            };
+
+            initPeer();
         } catch (err) {
             console.error("Failed to initialize PeerJS:", err);
         }
@@ -170,6 +230,21 @@
 >
     <CanvasBackground />
 
+    {#if desktopState.hostConnection}
+        <div
+            class="absolute top-6 left-1/2 -translate-x-1/2 z-100 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 backdrop-blur-md shadow-sm select-none pointer-events-none transition-all"
+        >
+            <span
+                class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+            ></span>
+            Conectado a:
+            <span
+                class="font-mono tracking-widest text-green-700 dark:text-green-300"
+                >{desktopState.hostConnection.peer}</span
+            >
+        </div>
+    {/if}
+
     <EmptyState
         isReady={desktopState.isReady}
         hasItems={desktopState.items.length > 0}
@@ -216,7 +291,7 @@
     />
 
     <CardContextMenu {onCopy} {onDelete} {onScanText} />
-    
+
     <OcrResultModal
         bind:open={desktopState.isOcrModalOpen}
         bind:text={desktopState.ocrText}
