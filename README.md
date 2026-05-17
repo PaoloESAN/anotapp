@@ -18,7 +18,7 @@
 
 ## Descripción
 
-Anotapp es una herramienta que captura automáticamente el historial del portapapeles y los presenta como tarjetas interactivas en un lienzo infinito. Permite organizar extractos de texto e imagenes de forma visual, con capacidades de redimensionamiento, personalizacion y edición.
+Anotapp es una herramienta que captura automáticamente el historial del portapapeles y los presenta como tarjetas interactivas en un lienzo infinito. Permite organizar extractos de texto, imágenes y archivos de forma visual a través de múltiples mesas de trabajo, conectando tus dispositivos móviles y de escritorio para una experiencia fluida.
 
 ## Capturas de pantalla
 
@@ -29,12 +29,14 @@ Anotapp es una herramienta que captura automáticamente el historial del portapa
 ## Caracteristicas
 
 - **Captura automática:** Monitorización nativa del portapapeles en tiempo real (texto e imágenes) mediante eventos del sistema operativo, sin polling.
-- Interfaz interactiva: Tarjetas que se pueden arrastrar, redimensionar y organizar libremente por capas.
-- Edicion de contenido: Capacidad de modificar textos y renombrar titulos de tarjetas mediante doble clic.
-- Personalizacion de interfaz: Seleccion de colores primarios y soporte para temas claro, oscuro y sincronización con el sistema.
-- Fondos de lienzo: Diferentes patrones visuales (cuadricula, puntos, ondas) o seleccion de una imagen personalizada con optimizacion automatica.
-- Ventana minimalista: Diseño sin bordes con controles personalizados estilo macOS.
-- Persistencia local: Todos tus elementos y configuraciones se guardan automaticamente en el almacenamiento local.
+- **Mesas de trabajo (Workspaces):** Organiza tus notas en múltiples áreas de trabajo con navegación fluida y arrastre de tarjetas entre mesas.
+- **Vincular dispositivos:** Conecta tu PC y smartphone escaneando un código QR para compartir contenido del portapapeles instantáneamente.
+- **Compartir y descargar archivos:** Sube archivos genéricos desde tu teléfono y descárgalos nativamente en tu computadora a través de conexión P2P rápida.
+- **Respaldo de datos:** Exporta e importa todas tus mesas de trabajo y notas en un archivo seguro para no perder nunca tu información.
+- **Extracción de texto (OCR):** Extrae texto de las imágenes de tu portapapeles con un solo clic.
+- **Gestión interactiva:** Tarjetas que se pueden arrastrar, redimensionar y organizar libremente. Menús contextuales globales (clic derecho) para acciones rápidas.
+- **Personalización de interfaz:** Nuevo panel de configuración por pestañas. Soporte para temas claro/oscuro, colores primarios, y fondos de lienzo (cuadrícula, puntos, ondas o imágenes personalizadas).
+- **Persistencia local:** Todos tus elementos y configuraciones se guardan automáticamente de forma local.
 
 ## Tecnologias utilizadas
 
@@ -54,14 +56,14 @@ Para ejecutar este proyecto de forma local, **asegúrate de tener instalado Rust
 git clone https://github.com/tu-usuario/anotapp.git
 ```
 
-2. Instalar las dependencias:
+2. Instalar las dependencias (el proyecto usa pnpm):
 ```bash
-npm install
+pnpm install
 ```
 
 3. Ejecutar en modo desarrollo:
 ```bash
-npx tauri dev
+pnpm tauri dev
 ```
 
 ## Licencia
