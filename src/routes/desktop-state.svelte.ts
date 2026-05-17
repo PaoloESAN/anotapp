@@ -64,6 +64,9 @@ class DesktopState {
     hostConnection = $state<DataConnection | null>(null);
     clientConnections = $state<DataConnection[]>([]);
 
+    hostedFiles = new Map<string, File>();
+    requestedFiles = new Set<string>();
+
     constructor() {
         if (typeof localStorage !== "undefined") {
             try {
@@ -249,6 +252,45 @@ class DesktopState {
         }
     }
 
+    addPeerFile(fileId: string, name: string, size: number) {
+        const newItem = {
+            id: crypto.randomUUID(),
+            type: "peer-file" as const,
+            content: "",
+            fileId,
+            name,
+            size,
+            x: window.innerWidth / 2 - 100 + (Math.random() * 50 - 25),
+            y: window.innerHeight / 2 - 50 + (Math.random() * 50 - 25),
+            z: this.maxZ++,
+            w: 240,
+            h: 120,
+        };
+        this.items.push(newItem);
+        this.broadcastToClients({ type: "add-item", item: newItem });
+    }
+
+    triggerDownload(blob: Blob | File, name: string) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name || "descarga";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    requestFile(fileId: string) {
+        this.requestedFiles.add(fileId);
+
+        const file = this.hostedFiles.get(fileId);
+        if (file) {
+            this.triggerDownload(file, file.name);
+            return;
+        }
+
+        this.broadcastToClients({ type: "request-file-data", fileId });
+    }
+
     moveItemToWorkspace(itemId: string, targetWorkspaceId: string) {
         // Find current workspace and item
         let itemToMove: ClipboardItem | null = null;
@@ -375,6 +417,36 @@ class DesktopState {
                 if (data.item.z >= this.maxZ) {
                     this.maxZ = data.item.z + 1;
                 }
+            }
+            return;
+        }
+
+        if (data.type === "request-file-data" && data.fileId) {
+            const file = this.hostedFiles.get(data.fileId);
+            if (file) {
+                file.arrayBuffer().then(buffer => {
+                    this.broadcastToClients({
+                        type: "file-data",
+                        fileId: data.fileId,
+                        data: buffer,
+                        name: file.name,
+                        mimeType: file.type
+                    });
+                });
+            } else if (this.hostConnection === null) {
+                this.broadcastToClients(data); // Reenviar a clientes
+            }
+            return;
+        }
+
+        if (data.type === "file-data" && data.fileId && data.data) {
+            if (this.requestedFiles.has(data.fileId)) {
+                this.requestedFiles.delete(data.fileId);
+                const blob = new Blob([data.data], { type: data.mimeType || "application/octet-stream" });
+                this.triggerDownload(blob, data.name);
+            }
+            if (this.hostConnection === null) {
+                this.broadcastToClients(data); // Reenviar a clientes
             }
             return;
         }

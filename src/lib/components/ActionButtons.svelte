@@ -6,6 +6,7 @@
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import Type from "@lucide/svelte/icons/type";
     import Image from "@lucide/svelte/icons/image";
+    import FileIcon from "@lucide/svelte/icons/file";
 
     let {
         addEmptyText,
@@ -35,6 +36,22 @@
         };
         reader.readAsDataURL(file);
     }
+
+    let genericFileInput: HTMLInputElement;
+
+    function handleFileSelect(e: Event) {
+        const target = e.target as HTMLInputElement;
+        if (!target.files || target.files.length === 0) return;
+
+        for (let i = 0; i < target.files.length; i++) {
+            const file = target.files[i];
+            const fileId = crypto.randomUUID();
+            desktopState.hostedFiles.set(fileId, file);
+            desktopState.addPeerFile(fileId, file.name, file.size);
+        }
+        target.value = "";
+    }
+
     let isMenuOpen = $state(false);
 </script>
 
@@ -44,6 +61,14 @@
     accept="image/*"
     class="hidden"
     onchange={handleImageSelect}
+/>
+
+<input
+    bind:this={genericFileInput}
+    type="file"
+    multiple
+    class="hidden"
+    onchange={handleFileSelect}
 />
 
 <!-- Action Buttons (Bottom Left) -->
@@ -89,6 +114,13 @@
             >
                 <Image class="w-4 h-4 text-primary" />
                 <span>Imagen</span>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+                onclick={() => genericFileInput.click()}
+                class="flex items-center gap-2 py-2.5 cursor-pointer"
+            >
+                <FileIcon class="w-4 h-4 text-primary" />
+                <span>Archivo</span>
             </DropdownMenu.Item>
         </DropdownMenu.Content>
     </DropdownMenu.Root>

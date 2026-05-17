@@ -6,6 +6,7 @@
     import FileIcon from "@lucide/svelte/icons/file";
     import ScanText from "@lucide/svelte/icons/scan-text";
     import MoveRight from "@lucide/svelte/icons/move-right";
+    import Download from "@lucide/svelte/icons/download";
     import type { ClipboardItem } from "$lib/types";
     import { desktopState } from "../../routes/desktop-state.svelte";
 
@@ -151,6 +152,19 @@
                                 <ScanText class="w-3.5 h-3.5" />
                             </button>
                         {/if}
+                        {#if item.type === "peer-file"}
+                            <button
+                                onpointerdown={(e) => e.stopPropagation()}
+                                onclick={() => {
+                                    if (item.fileId)
+                                        desktopState.requestFile(item.fileId);
+                                }}
+                                class="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-md text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                title="Descargar"
+                            >
+                                <Download class="w-3.5 h-3.5" />
+                            </button>
+                        {/if}
                         <button
                             onpointerdown={(e) => e.stopPropagation()}
                             onclick={() => onCopy(item)}
@@ -187,6 +201,19 @@
                         title="Extraer Texto (OCR)"
                     >
                         <ScanText class="w-4 h-4" />
+                    </button>
+                {/if}
+                {#if item.type === "peer-file"}
+                    <button
+                        onpointerdown={(e) => e.stopPropagation()}
+                        onclick={() => {
+                            if (item.fileId)
+                                desktopState.requestFile(item.fileId);
+                        }}
+                        class="p-2 bg-white/95 dark:bg-zinc-900/95 shadow-md border border-slate-200/80 dark:border-zinc-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        title="Descargar"
+                    >
+                        <Download class="w-4 h-4" />
                     </button>
                 {/if}
                 <button
@@ -291,6 +318,35 @@
                         alt="Clipboard capture"
                         class="w-full h-full object-contain pointer-events-none drop-shadow-lg z-10"
                     />
+                </div>
+            {:else if item.type === "peer-file"}
+                <div
+                    class="flex flex-col items-center justify-center p-2 h-full gap-2 text-slate-700 dark:text-zinc-300 w-full overflow-hidden"
+                >
+                    <FileIcon class="w-8 h-8 text-primary opacity-80" />
+                    <div class="text-center w-full px-2">
+                        <span
+                            class="text-sm font-bold block truncate w-full"
+                            title={item.name}>{item.name}</span
+                        >
+                        <span
+                            class="text-xs text-muted-foreground font-medium mt-0.5 block"
+                        >
+                            {#if item.size !== undefined}
+                                {#if item.size < 1024 * 1024}
+                                    {Math.round(item.size / 1024)} KB
+                                {:else if item.size < 1024 * 1024 * 1024}
+                                    {(item.size / 1024 / 1024).toFixed(2)} MB
+                                {:else}
+                                    {(item.size / 1024 / 1024 / 1024).toFixed(
+                                        2,
+                                    )} GB
+                                {/if}
+                            {:else}
+                                Desconocido
+                            {/if}
+                        </span>
+                    </div>
                 </div>
             {:else if (item.files?.length ?? 0) === 1}
                 {@const filePath = item.files![0]}

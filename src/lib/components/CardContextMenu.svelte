@@ -4,6 +4,7 @@
     import ScanText from "@lucide/svelte/icons/scan-text";
     import MoveRight from "@lucide/svelte/icons/move-right";
     import Trash2 from "@lucide/svelte/icons/trash-2";
+    import Download from "@lucide/svelte/icons/download";
     import { desktopState } from "../../routes/desktop-state.svelte";
 
     let { onCopy, onDelete, onScanText } = $props<{
@@ -58,6 +59,27 @@
                                 class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
                             />
                             <span class="font-medium">OCR</span>
+                        </div>
+                    </DropdownMenu.Item>
+                {/if}
+
+                {#if desktopState.contextMenu.item?.type === "peer-file"}
+                    <DropdownMenu.Item
+                        onclick={() => {
+                            if (desktopState.contextMenu.item?.fileId) {
+                                desktopState.requestFile(
+                                    desktopState.contextMenu.item.fileId,
+                                );
+                                desktopState.contextMenu.open = false;
+                            }
+                        }}
+                        class="flex items-center justify-between px-2.5 py-1.5 text-sm rounded-xl hover:bg-muted cursor-pointer transition-colors group"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <Download
+                                class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                            />
+                            <span class="font-medium">Descargar</span>
                         </div>
                     </DropdownMenu.Item>
                 {/if}

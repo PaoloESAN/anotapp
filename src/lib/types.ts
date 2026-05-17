@@ -1,8 +1,11 @@
 export interface ClipboardItem {
     id: string;
-    type: "text" | "image" | "files";
+    type: "text" | "image" | "files" | "peer-file";
     content: string;
     files?: string[];
+    fileId?: string;
+    name?: string;
+    size?: number;
     x: number;
     y: number;
     z: number;
