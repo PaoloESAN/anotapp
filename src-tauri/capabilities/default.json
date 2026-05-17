@@ -30,6 +30,8 @@
     "clipboard:allow-available-types",
     "clipboard:allow-start-monitor",
     "clipboard:allow-stop-monitor",
-    "clipboard:allow-is-monitor-running"
+    "clipboard:allow-is-monitor-running",
+    "dialog:default",
+    "fs:default"
   ]
 }

@@ -134,7 +134,7 @@
                     class="space-y-4 flex flex-col items-center"
                 >
                     <div
-                        class="bg-white p-2 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex items-center justify-center"
+                        class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 flex items-center justify-center"
                     >
                         <canvas
                             bind:this={canvas}

@@ -270,11 +270,37 @@ class DesktopState {
         this.broadcastToClients({ type: "add-item", item: newItem });
     }
 
-    triggerDownload(blob: Blob | File, name: string) {
+    async triggerDownload(blob: Blob | File, defaultName: string) {
+        if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+            try {
+                const { save } = await import("@tauri-apps/plugin-dialog");
+                const { writeFile } = await import("@tauri-apps/plugin-fs");
+                const { downloadDir, join } = await import("@tauri-apps/api/path");
+                
+                const dDir = await downloadDir();
+                const defaultPathToSave = await join(dDir, defaultName);
+                
+                const filePath = await save({
+                    defaultPath: defaultPathToSave,
+                    title: "Guardar archivo"
+                });
+
+                if (filePath) {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const u8array = new Uint8Array(arrayBuffer);
+                    await writeFile(filePath, u8array);
+                }
+                return;
+            } catch (err) {
+                console.error("Falló la descarga nativa, usando fallback web:", err);
+            }
+        }
+
+        // Fallback para Web / Móvil
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = name || "descarga";
+        a.download = defaultName || "descarga";
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }

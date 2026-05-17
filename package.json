@@ -37,6 +37,8 @@
 	},
 	"dependencies": {
 		"@tauri-apps/api": "^2.10.1",
+		"@tauri-apps/plugin-dialog": "~2.7.1",
+		"@tauri-apps/plugin-fs": "~2.5.1",
 		"jsqr": "^1.4.0",
 		"mode-watcher": "^1.1.0",
 		"peerjs": "^1.5.5",
